@@ -130,3 +130,9 @@ type ReviewRating struct {
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 }
+
+type OTP struct {
+	Email     string `gorm:"primarykey" json:"email"`
+	OTP       string
+	OTPExpiry time.Time
+}
