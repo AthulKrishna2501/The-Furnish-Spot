@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"net/smtp"
 	"os"
 )
 
@@ -24,5 +25,17 @@ func SendEmail(to, otp string) {
 	from := os.Getenv("EMAIL_ADDRESS")
 	password := os.Getenv("EMAIL_PASSWORD")
 
-	if from =="" || password
+	if from == "" || password == "" {
+		log.Fatal("Email credentials not set in environment variable")
+	}
+
+	msg := "Your OTP for Signup is" + otp
+
+	err := smtp.SendMail("smtp.example.com:587", smtp.PlainAuth("", from, password, "smtp.example.com"),
+		from, []string{to}, []byte(msg))
+
+	if err != nil {
+		log.Fatal("Error Sending otp", err)
+	}
+	fmt.Println("OTP sent successfully")
 }
