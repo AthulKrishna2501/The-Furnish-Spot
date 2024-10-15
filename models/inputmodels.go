@@ -18,3 +18,7 @@ type LoginInput struct {
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required,min=8,max=32"`
 }
+
+type SearchProduct struct {
+	Name string `json:"name" binding:"required"`
+}
