@@ -11,3 +11,8 @@ type VerifyOTP struct {
 	Email string `json:"email" binding:"required,email"`
 	Code  string `json:"code" validate:"required,len=6"`
 }
+
+type LoginInput struct {
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=8,max=32"`
+}

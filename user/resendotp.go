@@ -28,7 +28,7 @@ func ResendOTP(c *gin.Context) {
 	if result.Error != nil {
 		log.Println("Error updating OTP record:", result.Error)
 	} else {
-		c.JSON(http.StatusOK, gin.H{"message": "OTP resend successfull"})
+		c.JSON(http.StatusOK, gin.H{"message": "OTP resend succesfull"})
 	}
 
 }

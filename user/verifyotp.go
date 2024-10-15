@@ -76,7 +76,3 @@ func VerifyOTP(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, gin.H{"message": "User registered successfully"})
 }
-
-func ResendOTP(c *gin.Context){
-	
-}

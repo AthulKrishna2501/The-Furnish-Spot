@@ -8,4 +8,6 @@ import (
 func RegisterURL(router *gin.Engine) {
 	router.POST("/signup/", user.SignUp)
 	router.POST("/verifyotp", user.VerifyOTP)
+	router.POST("/resendotp/:email", user.ResendOTP)
+	router.POST("/login", user.Login)
 }
