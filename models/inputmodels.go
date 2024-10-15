@@ -5,6 +5,8 @@ type SignupInput struct {
 	Email       string `json:"email" validate:"required,email"`
 	PhoneNumber string `json:"phonenumber" validate:"required,len=10,numeric"`
 	Password    string `json:"password" validate:"required,min=8,max=32"`
+	CaptchaID   string `json:"captcha_id" binding:"required"`
+	Captcha     string `json:"captcha" binding:"required"`
 }
 
 type VerifyOTP struct {

@@ -3,6 +3,7 @@ module github.com/AthulKrishna2501/The-Furniture-Spot
 go 1.22.2
 
 require (
+	github.com/dchest/captcha v1.0.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/golang-jwt/jwt/v4 v4.5.0

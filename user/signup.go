@@ -8,6 +8,7 @@ import (
 	db "github.com/AthulKrishna2501/The-Furniture-Spot/DB"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/helper"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/models"
+	"github.com/dchest/captcha"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -27,6 +28,13 @@ func SignUp(c *gin.Context) {
 			"status":  false,
 			"message": message,
 		})
+		return
+	}
+	captchaID := input.CaptchaID
+	captchaSolution := input.Captcha
+
+	if !captcha.VerifyString(captchaID, captchaSolution) {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid Captcha"})
 		return
 	}
 
