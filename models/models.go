@@ -1,14 +1,17 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type User struct {
-	UserID      int `gorm:"primaryKey;autoIncrement"`
-	UserName    string
-	Address     string
-	Email       string `gorm:"not null;unique"`
-	Password    string `gorm:"not null"`
-	PhoneNumber *string
+	gorm.Model
+	UserName    string `gorm:"column:user_name;not null"`
+	Email       string `gorm:"column:email;not null"`
+	Password    string `gorm:"column:password;not null"`
+	PhoneNumber string `gorm:"column:phone_number;not null"`
 	Status      string `gorm:"check(status IN('Active', 'Inactive', 'Blocked'))"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
@@ -131,8 +134,21 @@ type ReviewRating struct {
 	UpdatedAt      time.Time
 }
 
+type TempUser struct {
+	UserName    string `json:"username"`
+	Address     string
+	Email       string `json:"email"`
+	Password    string
+	PhoneNumber string
+}
+
+type UserLoginMethod struct {
+	UserLoginMethodEmail string
+	LoginMethod          string
+}
+
 type OTP struct {
-	Email     string `gorm:"primarykey" json:"email"`
-	OTP       string
-	OTPExpiry time.Time
+	Email  string
+	Code   string
+	Expiry time.Time
 }

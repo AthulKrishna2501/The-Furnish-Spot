@@ -22,7 +22,7 @@ func InitDatabase() {
 		log.Fatal("Error loading database", err)
 		return
 	}
-	Db.AutoMigrate(&models.User{}, &models.Address{}, &models.Admin{}, &models.Category{}, &models.Product{}, &models.Wishlist{}, &models.Cart{}, &models.CartItem{}, &models.Order{}, &models.OrderItem{}, &models.Coupon{}, &models.ReviewRating{})
+	Db.AutoMigrate(&models.User{}, &models.Address{}, &models.Admin{}, &models.Category{}, &models.Product{}, &models.Wishlist{}, &models.Cart{}, &models.CartItem{}, &models.Order{}, &models.OrderItem{}, &models.Coupon{}, &models.ReviewRating{}, models.OTP{}, models.TempUser{})
 
 }
 func Migrate(db *gorm.DB) {
@@ -38,4 +38,5 @@ func Migrate(db *gorm.DB) {
 	db.AutoMigrate(&models.Order{})
 	db.AutoMigrate(&models.OrderItem{})
 	db.AutoMigrate(&models.ReviewRating{})
+	db.AutoMigrate(&models.OTP{})
 }
