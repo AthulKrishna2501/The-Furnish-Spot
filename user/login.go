@@ -23,7 +23,7 @@ func Login(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid username or password"})
 		return
 	}
-	token, err := middleware.GenerateToken(user.UserName, user.Email)
+	token, err := middleware.CreateToken(user.UserName, user.Email, user.ID)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"error": "Error Generating jwt"})
 	}

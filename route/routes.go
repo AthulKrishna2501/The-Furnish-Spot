@@ -1,6 +1,7 @@
 package route
 
 import (
+	"github.com/AthulKrishna2501/The-Furniture-Spot/admin"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/captcha"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/user"
 
@@ -17,4 +18,9 @@ func RegisterURL(router *gin.Engine) {
 	router.POST("/login", user.Login)
 	router.GET("/products", user.ListProducts)
 	router.POST("/search-products", user.SearchProduct)
+
+	//Admin
+
+	router.POST("/adminlogin", admin.AdminLogin)
+
 }
