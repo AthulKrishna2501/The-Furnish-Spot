@@ -47,11 +47,11 @@ type Category struct {
 }
 
 type Product struct {
-	ProductID   int `gorm:"primaryKey;autoIncrement"`
-	ProductName string
-	Description string
-	Price       float64
-	CategoryID  int `gorm:"not null;index;constraint:OnDelete:CASCADE;foreignKey:CategoryID;references:CategoryID"`
+	ProductID   int     `gorm:"primaryKey"`
+	ProductName string  `json:"name"`
+	Description string  `json:"description"`
+	Price       float64 `json:"price"`
+	CategoryID  uint    `gorm:"not null;index;constraint:OnDelete:CASCADE;foreignKey:CategoryID;references:CategoryID"`
 	ImgURL      string
 	Status      string `gorm:"check(status IN('Available', 'Unavailable', 'Out of stock'))"`
 	CreatedAt   time.Time

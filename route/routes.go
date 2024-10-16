@@ -3,6 +3,7 @@ package route
 import (
 	"github.com/AthulKrishna2501/The-Furniture-Spot/admin"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/admin/category"
+	"github.com/AthulKrishna2501/The-Furniture-Spot/admin/product"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/captcha"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/user"
 
@@ -28,4 +29,8 @@ func RegisterURL(router *gin.Engine) {
 	router.PUT("/updatecategory/:id", category.EditCategory)
 	router.DELETE("/deletecategory/:id", category.DeleteCategory)
 
+	router.GET("/viewproducts", product.ViewProducts)
+	router.POST("/addproducts", product.AddProducts)
+	router.PUT("/updateproduct/:id", product.UpdateProduct)
+	router.DELETE("/deleteproduct/:id", product.DeleteProduct)
 }
