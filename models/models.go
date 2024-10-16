@@ -40,8 +40,8 @@ type Admin struct {
 }
 
 type Category struct {
-	CategoryID   int `gorm:"primaryKey;autoIncrement"`
-	CategoryName string
+	CategoryID   uint   `gorm:"primaryKey" json:"id"`
+	CategoryName string `json:"name"`
 	CreatedAt    time.Time
 	DeletedAt    *time.Time `gorm:"index"`
 }

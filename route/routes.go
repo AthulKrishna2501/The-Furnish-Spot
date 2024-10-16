@@ -2,6 +2,7 @@ package route
 
 import (
 	"github.com/AthulKrishna2501/The-Furniture-Spot/admin"
+	"github.com/AthulKrishna2501/The-Furniture-Spot/admin/category"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/captcha"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/user"
 
@@ -22,5 +23,9 @@ func RegisterURL(router *gin.Engine) {
 	//Admin
 
 	router.POST("/adminlogin", admin.AdminLogin)
+	router.GET("/viewcategories", category.ViewCategory)
+	router.POST("/addcategory", category.AddCategory)
+	router.PUT("/updatecategory/:id", category.EditCategory)
+	router.DELETE("/deletecategory/:id", category.DeleteCategory)
 
 }
