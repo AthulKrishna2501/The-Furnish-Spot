@@ -38,7 +38,7 @@ func AdminLogin(c *gin.Context) {
 
 	}
 
-	token, err := middleware.CreateToken(admin.AdminName, admin.Email, uint(admin.AdminID))
+	token, err := middleware.CreateToken("admin", admin.Email, uint(admin.AdminID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return

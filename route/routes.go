@@ -6,6 +6,7 @@ import (
 	"github.com/AthulKrishna2501/The-Furniture-Spot/admin/category"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/admin/product"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/captcha"
+	"github.com/AthulKrishna2501/The-Furniture-Spot/middleware"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/user"
 
 	"github.com/gin-gonic/gin"
@@ -19,11 +20,10 @@ func RegisterURL(router *gin.Engine) {
 	router.POST("/verifyotp", user.VerifyOTP)
 	router.POST("/resendotp/:email", user.ResendOTP)
 	router.POST("/login", user.Login)
-	router.GET("/products", user.ListProducts)
-	router.POST("/search-products", user.SearchProduct)
+	router.GET("/products", middleware.AuthMiddleware("user"), user.ListProducts)
+	router.POST("/search-products", middleware.AuthMiddleware("user"), user.SearchProduct)
 
 	//Admin
-
 	router.POST("/adminlogin", admin.AdminLogin)
 	router.GET("/viewcategories", category.ViewCategory)
 	router.POST("/addcategory", category.AddCategory)
@@ -37,5 +37,5 @@ func RegisterURL(router *gin.Engine) {
 
 	router.GET("/listusers", adminuser.ListUsers)
 	router.POST("blockuser/:id", adminuser.BlockUser)
-	router.POST("/unblockuser/:id",adminuser.UnblockUser)
+	router.POST("/unblockuser/:id", adminuser.UnblockUser)
 }

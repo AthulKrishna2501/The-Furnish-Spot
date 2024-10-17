@@ -20,6 +20,11 @@ func ViewProducts(c *gin.Context) {
 		return
 	}
 
+	if len(products) == 0 {
+		c.JSON(http.StatusOK, gin.H{"message": "No products listed"})
+		return
+	}
+
 	c.JSON(http.StatusOK, products)
 }
 
