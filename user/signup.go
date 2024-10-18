@@ -38,6 +38,17 @@ func SignUp(c *gin.Context) {
 		return
 	}
 
+	var loginmethod string
+	db.Db.Model(&models.UserLoginMethod{}).Where("user_login_method_email = ?", input.Email).Pluck("login_method", &loginmethod)
+	if loginmethod == "Google Authentication" {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  false,
+			"message": "please log in through google authentication",
+			"data":    gin.H{},
+		})
+		return
+	}
+
 	var count int64
 	db.Db.Raw(`SELECT COUNT(*) FROM users where email = ?`, input.Email).Scan(&count)
 	if count != 0 {

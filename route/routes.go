@@ -17,6 +17,8 @@ func RegisterURL(router *gin.Engine) {
 	router.GET("/getcaptcha", captcha.GetCaptcha)
 	router.GET("/captcha/:captchaID", captcha.CaptchaHandler)
 	router.POST("/signup", user.SignUp)
+	router.GET("/googlelogin",user.HandleGoogleLogin)
+	router.GET("/auth/google/callback",user.HandleGoogleCallback)
 	router.POST("/verifyotp", user.VerifyOTP)
 	router.POST("/resendotp/:email", user.ResendOTP)
 	router.POST("/login", user.Login)
