@@ -7,6 +7,7 @@ import (
 	"github.com/AthulKrishna2501/The-Furniture-Spot/middleware"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/models"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func Login(c *gin.Context) {
@@ -20,7 +21,11 @@ func Login(c *gin.Context) {
 
 	result := db.Db.Where("email=?", input.Email).First(&user)
 	if result.Error != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid username or password"})
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid email or password"})
+		return
+	}
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password)); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid email or password"})
 		return
 	}
 	token, err := middleware.CreateToken("user", user.Email, user.ID)

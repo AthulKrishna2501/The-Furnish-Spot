@@ -30,12 +30,10 @@ func AdminLogin(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 		}
 
-		if err := db.Db.Where("password =?", input.Password).First(&admin).Error; err != nil {
-			if err == gorm.ErrRecordNotFound {
-				c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
-			}
-		}
-
+	}
+	if admin.Password != input.Password {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+		return
 	}
 
 	token, err := middleware.CreateToken("admin", admin.Email, uint(admin.AdminID))
