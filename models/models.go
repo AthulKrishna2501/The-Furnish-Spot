@@ -40,22 +40,22 @@ type Admin struct {
 }
 
 type Category struct {
-	CategoryID   uint   `gorm:"primaryKey" json:"id"`
+	CategoryID   uint   `gorm:"primaryKey" json:"category_id"`
 	CategoryName string `json:"name"`
 	CreatedAt    time.Time
-	DeletedAt    *time.Time `gorm:"index"`
+	DeletedAt    gorm.DeletedAt `gorm:"index"`
 }
 
 type Product struct {
 	ProductID   int     `gorm:"primaryKey"`
-	ProductName string  `json:"name"`
+	ProductName string  `json:"name"`	
 	Description string  `json:"description"`
 	Price       float64 `json:"price"`
-	CategoryID  uint    `gorm:"not null;index;constraint:OnDelete:CASCADE;foreignKey:CategoryID;references:CategoryID"`
-	ImgURL      string
+	CategoryID  uint    `gorm:"not null;index;constraint:OnDelete:CASCADE;foreignKey:CategoryID;references:CategoryID" json:"category_id"`
+	ImgURL      string   `json:"img_url"`
 	Status      string `gorm:"check(status IN('Available', 'Unavailable', 'Out of stock'))"`
 	CreatedAt   time.Time
-	DeletedAt   *time.Time `gorm:"index"`
+	DeletedAt   gorm.DeletedAt `gorm:"index"`
 }
 
 type Wishlist struct {
