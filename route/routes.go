@@ -22,7 +22,7 @@ func RegisterURL(router *gin.Engine) {
 	router.POST("/verifyotp", user.VerifyOTP)
 	router.POST("/resendotp/:email", user.ResendOTP)
 	router.POST("/login", user.Login)
-	router.GET("/products", middleware.AuthMiddleware("user"), user.ListProducts)
+	router.GET("/products", middleware.AuthMiddleware("user"), user.ViewProducts)
 	router.POST("/search-products", middleware.AuthMiddleware("user"), user.SearchProduct)
 
 	//Admin

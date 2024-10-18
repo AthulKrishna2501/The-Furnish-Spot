@@ -13,12 +13,8 @@ import (
 func ViewProducts(c *gin.Context) {
 	var products []models.Product
 	fmt.Println("HII")
-	result := db.Db.Raw(`
-        SELECT p.product_id, p.product_name, p.price, p.description,p.status,p.img_url,c.category_name FROM products p LEFT JOIN categories c 
-    ON p.category_id = c.category_id  -- Join based on category_id
-WHERE 
-    p.deleted_at IS NULL 
-    AND c.deleted_at IS NULL`).Scan(&products)
+	result := db.Db.Raw(` SELECT p.product_id, p.product_name, p.price, p.description,p.status,p.img_url,c.category_name,c.category_id FROM products p LEFT JOIN categories c 
+   ON p.category_id = c.category_id WHERE  p.deleted_at IS NULL AND c.deleted_at IS NULL`).Scan(&products)
 	fmt.Println(result)
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
@@ -79,21 +75,39 @@ func UpdateProduct(c *gin.Context) {
 	productID := c.Param("id")
 	var product models.Product
 
-	if err := db.Db.First(&product, productID).Error; err != nil {
+	if err := db.Db.Where("deleted_at IS NULL").First(&product, productID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
 		return
 	}
 
-	if err := c.ShouldBind(&product); err != nil {
+	var input struct {
+		ProductName string  `json:"product_name"`
+		Description string  `json:"description"`
+		Price       float64 `json:"price"`
+		ImgURL      string  `json:"img_url"`
+		Status      string  `json:"status"`
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
 
-	if err := db.Db.Save(&product).Error; err != nil {
+	updates := models.Product{
+		ProductName: input.ProductName,
+		Description: input.Description,
+		Price:       input.Price,
+		ImgURL:      input.ImgURL,
+		Status:      input.Status,
+	}
+	fmt.Println(updates)
+
+	if err := db.Db.Model(&product).Updates(updates).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update product"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"Product updated successfully": product.ProductName})
+
+	c.JSON(http.StatusOK, gin.H{"message": "Product updated successfully", "product_name": product.ProductName})
 }
 
 func DeleteProduct(c *gin.Context) {
