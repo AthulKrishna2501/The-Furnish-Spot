@@ -5,11 +5,12 @@ import (
 
 	db "github.com/AthulKrishna2501/The-Furniture-Spot/DB"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/models"
+	"github.com/AthulKrishna2501/The-Furniture-Spot/models/responsemodels"
 	"github.com/gin-gonic/gin"
 )
 
 func ListUsers(c *gin.Context) {
-	var users []models.User
+	var users []responsemodels.User
 
 	if err := db.Db.Find(&users).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrive users"})
