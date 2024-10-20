@@ -3,13 +3,12 @@ package helper
 import (
 	"fmt"
 
-	"github.com/AthulKrishna2501/The-Furniture-Spot/models"
 	"github.com/go-playground/validator"
 )
 
 var validate = validator.New()
 
-func ValidateAll(input models.SignupInput) (string, error) {
+func ValidateAll(input any) (string, error) {
 
 	err := validate.Struct(input)
 	if err != nil {

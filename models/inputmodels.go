@@ -22,3 +22,10 @@ type LoginInput struct {
 type SearchProduct struct {
 	Name string `json:"name" binding:"required"`
 }
+
+type EditUser struct {
+	UserName    string `json:"username" validate:"required,min=3,max=16,alphanum"`
+	Email       string `json:"email" validate:"required,email"`
+	PhoneNumber string `json:"phonenumber" validate:"required,len=10,numeric"`
+	Password    string `json:"password" validate:"required,min=8,max=32"`
+}

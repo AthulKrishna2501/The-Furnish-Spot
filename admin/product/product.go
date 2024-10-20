@@ -12,10 +12,7 @@ import (
 
 func ViewProducts(c *gin.Context) {
 	var products []models.Product
-	fmt.Println("HII")
-	result := db.Db.Raw(` SELECT p.product_id, p.product_name, p.price, p.description,p.status,p.img_url,c.category_name,c.category_id FROM products p LEFT JOIN categories c 
-   ON p.category_id = c.category_id WHERE  p.deleted_at IS NULL AND c.deleted_at IS NULL`).Scan(&products)
-	fmt.Println(result)
+	result := db.Db.Find(&products)
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return
@@ -37,7 +34,6 @@ func AddProducts(c *gin.Context) {
 		return
 	}
 
-	fmt.Println(products)
 	var category models.Category
 	if err := db.Db.Where("category_id = ?", products.CategoryID).First(&category).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -53,12 +49,16 @@ func AddProducts(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Product already exists in this category"})
 		return
 	}
-
+	if products.Price < 0 {
+		c.JSON(http.StatusOK, gin.H{"message": "Price cannot be a negative value"})
+		return
+	}
 	p := models.Product{
 		ProductName: products.ProductName,
 		Price:       products.Price,
 		CategoryID:  products.CategoryID,
 		Description: products.Description,
+		Quantity:    products.Quantity,
 		Status:      products.Status,
 		ImgURL:      products.ImgURL,
 	}

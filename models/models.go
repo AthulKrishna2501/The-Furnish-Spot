@@ -11,7 +11,7 @@ type User struct {
 	UserName    string `gorm:"column:user_name;not null"`
 	Email       string `gorm:"column:email;not null"`
 	Password    string `gorm:"column:password;not null"`
-	PhoneNumber string `gorm:"column:phone_number;not null"`
+	PhoneNumber string `gorm:"column:phonenumber;not null"`
 	Status      string `gorm:"check(status IN('Active', 'Inactive', 'Blocked'))"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
@@ -48,12 +48,13 @@ type Category struct {
 
 type Product struct {
 	ProductID   int     `gorm:"primaryKey"`
-	ProductName string  `json:"name"`	
+	ProductName string  `json:"name"`
 	Description string  `json:"description"`
 	Price       float64 `json:"price"`
 	CategoryID  uint    `gorm:"not null;index;constraint:OnDelete:CASCADE;foreignKey:CategoryID;references:CategoryID" json:"category_id"`
-	ImgURL      string   `json:"img_url"`
-	Status      string `gorm:"check(status IN('Available', 'Unavailable', 'Out of stock'))"`
+	ImgURL      string  `json:"img_url"`
+	Status      string  `gorm:"check(status IN('Available', 'Unavailable', 'Out of stock'))"`
+	Quantity    uint    `json:"quantity"`
 	CreatedAt   time.Time
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
 }

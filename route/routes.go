@@ -17,13 +17,15 @@ func RegisterURL(router *gin.Engine) {
 	router.GET("/getcaptcha", captcha.GetCaptcha)
 	router.GET("/captcha/:captchaID", captcha.CaptchaHandler)
 	router.POST("/signup", user.SignUp)
-	router.GET("/googlelogin",user.HandleGoogleLogin)
-	router.GET("/auth/google/callback",user.HandleGoogleCallback)
+	router.GET("/googlelogin", user.HandleGoogleLogin)
+	router.GET("/auth/google/callback", user.HandleGoogleCallback)
 	router.POST("/verifyotp", user.VerifyOTP)
 	router.POST("/resendotp/:email", user.ResendOTP)
 	router.POST("/login", user.Login)
 	router.GET("/products", middleware.AuthMiddleware("user"), user.ViewProducts)
 	router.POST("/search-products", middleware.AuthMiddleware("user"), user.SearchProduct)
+	router.GET("/viewprofile", middleware.AuthMiddleware("user"), user.UserProfile)
+	router.POST("/editprofile", middleware.AuthMiddleware("user"), user.EditProfile)
 
 	//Admin
 	router.POST("/adminlogin", admin.AdminLogin)

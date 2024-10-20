@@ -1,0 +1,74 @@
+package user
+
+import (
+	"net/http"
+
+	db "github.com/AthulKrishna2501/The-Furniture-Spot/DB"
+	"github.com/AthulKrishna2501/The-Furniture-Spot/helper"
+	"github.com/AthulKrishna2501/The-Furniture-Spot/middleware"
+	"github.com/AthulKrishna2501/The-Furniture-Spot/models"
+	"github.com/AthulKrishna2501/The-Furniture-Spot/models/responsemodels"
+	"github.com/gin-gonic/gin"
+)
+
+func UserProfile(c *gin.Context) {
+	claims, _ := c.Get("claims")
+
+	customClaims, ok := claims.(*middleware.Claims)
+
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invlaid claims"})
+	}
+
+	userID := customClaims.ID
+	var user responsemodels.User
+
+	result := db.Db.First(&user, userID)
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": user})
+
+}
+
+func EditProfile(c *gin.Context) {
+
+	claims, _ := c.Get("claims")
+
+	customClaims, ok := claims.(*middleware.Claims)
+
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid claims"})
+		return
+	}
+	userID := customClaims.ID
+
+	var input models.EditUser
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	message, err := helper.ValidateAll(input)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": message})
+		return
+	}
+
+	editUser := models.User{
+		UserName:    input.UserName,
+		Email:       input.Email,
+		Password:    input.Password,
+		PhoneNumber: input.PhoneNumber,
+	}
+
+	result := db.Db.Model(&models.User{}).Where("id = ?", userID).Updates(editUser)
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"User updated successfully": editUser})
+
+}
