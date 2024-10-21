@@ -2,8 +2,6 @@ package responsemodels
 
 import (
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type Product struct {
@@ -18,7 +16,6 @@ type Product struct {
 }
 
 type User struct {
-	gorm.Model
 	UserName    string `gorm:"column:user_name;not null"`
 	Email       string `gorm:"column:email;not null"`
 	PhoneNumber string `gorm:"column:phonenumber;not null"`

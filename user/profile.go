@@ -9,6 +9,7 @@ import (
 	"github.com/AthulKrishna2501/The-Furniture-Spot/models"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/models/responsemodels"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 func UserProfile(c *gin.Context) {
@@ -23,17 +24,18 @@ func UserProfile(c *gin.Context) {
 	userID := customClaims.ID
 	var user responsemodels.User
 
-	result := db.Db.First(&user, userID)
+	result := db.Db.Where("id=?",userID).First(&user)
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": user})
+	c.JSON(http.StatusOK, gin.H{"User Retrieved Successfully":user})
 
 }
 
 func EditProfile(c *gin.Context) {
+	var user models.User
 
 	claims, _ := c.Get("claims")
 
@@ -48,6 +50,12 @@ func EditProfile(c *gin.Context) {
 	var input models.EditUser
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	exists := db.Db.Where("email=?", input.Email).First(&user)
+	if exists.Error != gorm.ErrRecordNotFound {
+		c.JSON(http.StatusConflict, gin.H{"message": "Email aldready exists"})
 		return
 	}
 
