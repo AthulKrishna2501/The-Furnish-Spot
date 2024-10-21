@@ -26,6 +26,7 @@ func RegisterURL(router *gin.Engine) {
 	router.POST("/search-products", middleware.AuthMiddleware("user"), user.SearchProduct)
 	router.GET("/viewprofile", middleware.AuthMiddleware("user"), user.UserProfile)
 	router.POST("/editprofile", middleware.AuthMiddleware("user"), user.EditProfile)
+	router.GET("/viewaddress", middleware.AuthMiddleware("user"), user.ViewAddress)
 
 	//Admin
 	router.POST("/adminlogin", admin.AdminLogin)

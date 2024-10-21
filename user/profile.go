@@ -24,13 +24,13 @@ func UserProfile(c *gin.Context) {
 	userID := customClaims.ID
 	var user responsemodels.User
 
-	result := db.Db.Where("id=?",userID).First(&user)
+	result := db.Db.Where("id=?", userID).First(&user)
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"User Retrieved Successfully":user})
+	c.JSON(http.StatusOK, gin.H{"User Retrieved Successfully": user})
 
 }
 
@@ -80,3 +80,24 @@ func EditProfile(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"User updated successfully": editUser})
 
 }
+
+func ViewAddress(c *gin.Context) {
+	var address models.Address
+	claims, _ := c.Get("claims")
+	customClaims, ok := claims.(*middleware.Claims)
+
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Token"})
+		return
+	}
+
+	userID := customClaims.ID
+
+	result := db.Db.Where("user_id=?", userID).First(address)
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": address})
+}
+
