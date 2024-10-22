@@ -101,3 +101,24 @@ func ViewAddress(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": address})
 }
 
+func ViewOrders(c *gin.Context) {
+	var orders []models.Order
+	claims, _ := c.Get("claims")
+
+	customClaims, ok := claims.(*middleware.Claims)
+
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Token"})
+		return
+	}
+
+	userID := customClaims.ID
+
+	result := db.Db.Where("user_id=?", userID).First(&orders)
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "No orders found"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": orders})
+
+}
