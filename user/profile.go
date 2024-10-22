@@ -153,3 +153,38 @@ func CancelOrders(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Order canceled Successfully"})
 
 }
+
+func ForgotPassword(c *gin.Context) {
+	var user models.User
+	var input models.NewPassword
+
+	claims, _ := c.Get("claims")
+	customClaims, ok := claims.(*middleware.Claims)
+
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		return
+	}
+
+	userID := customClaims.ID
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if message, err := helper.ValidateAll(input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": message})
+		return
+	}
+
+	NewPassword := models.User{
+		Password: input.NewPassword,
+	}
+	if err := db.Db.Model(&user).Where("id=?", userID).Updates(&NewPassword).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update password"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Password changed successfully"})
+
+}

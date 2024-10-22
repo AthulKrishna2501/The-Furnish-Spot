@@ -29,3 +29,8 @@ type EditUser struct {
 	PhoneNumber string `json:"phonenumber" validate:"required,len=10,numeric"`
 	Password    string `json:"password" validate:"required,min=8,max=32"`
 }
+
+type NewPassword struct {
+	Password    string `json:"password" validate:"required,min=8,max=32"`
+	NewPassword string `json:"newpassword" validate:"required,min=8,max=32"`
+}
