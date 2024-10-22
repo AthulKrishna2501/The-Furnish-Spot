@@ -27,6 +27,10 @@ func UserProfile(c *gin.Context) {
 	var user responsemodels.User
 
 	result := db.Db.Where("id=?", userID).First(&user)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		c.JSON(http.StatusNotFound, gin.H{"message": "User not found"})
+		return
+	}
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return
@@ -84,7 +88,7 @@ func EditProfile(c *gin.Context) {
 }
 
 func ViewAddress(c *gin.Context) {
-	var address models.Address
+	var address []models.Address
 	claims, _ := c.Get("claims")
 	customClaims, ok := claims.(*middleware.Claims)
 
@@ -125,14 +129,33 @@ func ViewOrders(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "No orders found"})
 		return
 	}
+
+	if len(orders) == 0 {
+		c.JSON(http.StatusOK, gin.H{"message": "No orders found"})
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{"message": orders})
 
 }
 
 func CancelOrders(c *gin.Context) {
 	var orders models.Order
+	claims, _ := c.Get("claims")
+	customClaims, ok := claims.(*middleware.Claims)
+
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		return
+	}
+
+	userID := customClaims.ID
 
 	OrderID := c.Param("order_id")
+
+	if err := db.Db.Where("order_id= ? AND user_id = ?", OrderID, userID).First(&orders).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Order not found or unauthorized"})
+		return
+	}
 
 	if err := db.Db.First(&orders, OrderID).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Order not found"})
