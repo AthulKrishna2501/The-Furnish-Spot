@@ -1,6 +1,7 @@
 package user
 
 import (
+	"errors"
 	"net/http"
 
 	db "github.com/AthulKrishna2501/The-Furniture-Spot/DB"
@@ -19,6 +20,7 @@ func UserProfile(c *gin.Context) {
 
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invlaid claims"})
+		return
 	}
 
 	userID := customClaims.ID
@@ -53,7 +55,7 @@ func EditProfile(c *gin.Context) {
 		return
 	}
 
-	exists := db.Db.Where("email=?", input.Email).First(&user)
+	exists := db.Db.Where("email=? AND id !=?", input.Email, userID).First(&user)
 	if exists.Error != gorm.ErrRecordNotFound {
 		c.JSON(http.StatusConflict, gin.H{"message": "Email aldready exists"})
 		return
@@ -93,7 +95,11 @@ func ViewAddress(c *gin.Context) {
 
 	userID := customClaims.ID
 
-	result := db.Db.Where("user_id=?", userID).First(address)
+	result := db.Db.Where("user_id = ?", userID).First(&address)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		c.JSON(http.StatusNotFound, gin.H{"message": "Address not found"})
+		return
+	}
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return
@@ -114,11 +120,36 @@ func ViewOrders(c *gin.Context) {
 
 	userID := customClaims.ID
 
-	result := db.Db.Where("user_id=?", userID).First(&orders)
+	result := db.Db.Where("user_id=?", userID).Find(&orders)
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "No orders found"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": orders})
+
+}
+
+func CancelOrders(c *gin.Context) {
+	var orders models.Order
+
+	OrderID := c.Param("order_id")
+
+	if err := db.Db.First(&orders, OrderID).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Order not found"})
+		return
+	}
+
+	if orders.Status == "Canceled" || orders.Status == "Delivered" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Cannot cancel order"})
+		return
+	}
+	orders.Status = "Canceled"
+
+	if err := db.Db.Save(&orders).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to save orderstatus"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Order canceled Successfully"})
 
 }

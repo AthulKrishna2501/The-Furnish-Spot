@@ -27,6 +27,8 @@ func RegisterURL(router *gin.Engine) {
 	router.GET("/viewprofile", middleware.AuthMiddleware("user"), user.UserProfile)
 	router.POST("/editprofile", middleware.AuthMiddleware("user"), user.EditProfile)
 	router.GET("/viewaddress", middleware.AuthMiddleware("user"), user.ViewAddress)
+	router.GET("/vieworders", middleware.AuthMiddleware("user"), user.ViewOrders)
+	router.DELETE("/orders/:id/delete", middleware.AuthMiddleware("user"), user.CancelOrders)
 
 	//Admin
 	router.POST("/adminlogin", admin.AdminLogin)
