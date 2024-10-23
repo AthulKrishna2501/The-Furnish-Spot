@@ -3,13 +3,12 @@ package helper
 import (
 	"fmt"
 
-	"github.com/AthulKrishna2501/The-Furniture-Spot/models"
 	"github.com/go-playground/validator"
 )
 
 var validate = validator.New()
 
-func ValidateAll(input models.SignupInput) (string, error) {
+func ValidateAll(input any) (string, error) {
 
 	err := validate.Struct(input)
 	if err != nil {
@@ -29,5 +28,28 @@ func ValidateAll(input models.SignupInput) (string, error) {
 			}
 		}
 	}
+	return "", nil
+}
+
+func ValidateAddress(input any) (string, error) {
+
+	err := validate.Struct(input)
+	if err != nil {
+		for _, err := range err.(validator.ValidationErrors) {
+			switch err.Field() {
+			case "AddressLine1":
+				return "street address must be between 3 and 100 characters", fmt.Errorf("invalid street address")
+			case "City":
+				return "city must be between 2 and 50 characters", fmt.Errorf("invalid city")
+			case "PostaCode":
+				return "ZIP/postal code must be 5 or 6 characters", fmt.Errorf("invalid ZIP/postal code")
+			case "Country":
+				return "invalid country code (use 2-letter ISO code)", fmt.Errorf("invalid country code")
+			default:
+				return "invalid input", fmt.Errorf("validation failed")
+			}
+		}
+	}
+
 	return "", nil
 }

@@ -22,3 +22,24 @@ type LoginInput struct {
 type SearchProduct struct {
 	Name string `json:"name" binding:"required"`
 }
+
+type EditUser struct {
+	UserName    string `json:"username" validate:"required,min=3,max=16,alphanum"`
+	Email       string `json:"email" validate:"required,email"`
+	PhoneNumber string `json:"phonenumber" validate:"required,len=10,numeric"`
+	Password    string `json:"password" validate:"required,min=8,max=32"`
+}
+
+type NewPassword struct {
+	Password    string `json:"password" validate:"required,min=8,max=32"`
+	NewPassword string `json:"newpassword" validate:"required,min=8,max=32"`
+}
+
+type InputAddress struct {
+	AddressLine1 string `json:"addressline1"`
+	AddressLine2 string `json:"addressline2"`
+	Country      string `json:"country"`
+	City         string `json:"city"`
+	PostalCode   string `json:"postalcode"`
+	Landmark     string `json:"landmark"`
+}
