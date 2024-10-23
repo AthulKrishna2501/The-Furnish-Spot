@@ -11,6 +11,7 @@ import (
 	"github.com/AthulKrishna2501/The-Furniture-Spot/models"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/models/responsemodels"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -208,9 +209,14 @@ func ForgotPassword(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"message": message})
 		return
 	}
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
+		return
+	}
 
 	NewPassword := models.User{
-		Password: input.NewPassword,
+		Password: string(hashedPassword),
 	}
 	if err := db.Db.Model(&user).Where("id=?", userID).Updates(&NewPassword).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update password"})

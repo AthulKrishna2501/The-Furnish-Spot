@@ -22,6 +22,23 @@ func InitDatabase() {
 		log.Fatal("Error loading database", err)
 		return
 	}
-	Db.AutoMigrate(&models.User{}, &models.Address{}, &models.Admin{}, &models.Category{}, &models.Product{}, &models.Wishlist{}, &models.Cart{}, &models.CartItem{}, &models.Order{}, &models.OrderItem{}, &models.Coupon{}, &models.ReviewRating{}, models.OTP{}, models.TempUser{})
+	err = Db.AutoMigrate(
+		&models.User{},
+		&models.Address{},
+		&models.Admin{},
+		&models.Category{},
+		&models.Cart{},    // Create Cart first
+		&models.Product{}, // Then create Product
+		&models.Wishlist{},
+		&models.Order{},
+		&models.OrderItem{},
+		&models.Coupon{},
+		&models.ReviewRating{},
+		&models.OTP{},
+		&models.TempUser{},
+	)
+	if err != nil {
+		log.Fatalf("Migration failed: %v", err)
+	}
 
 }

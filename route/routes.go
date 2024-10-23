@@ -22,17 +22,27 @@ func RegisterURL(router *gin.Engine) {
 	router.POST("/verifyotp", user.VerifyOTP)
 	router.POST("/resendotp/:email", user.ResendOTP)
 	router.POST("/login", user.Login)
+	router.PUT("/forgotpassword", middleware.AuthMiddleware("user"), user.ForgotPassword)
+
+	//Products
 	router.GET("/products", middleware.AuthMiddleware("user"), user.ViewProducts)
 	router.POST("/search-products", middleware.AuthMiddleware("user"), user.SearchProduct)
+
+	//Profile
 	router.GET("/viewprofile", middleware.AuthMiddleware("user"), user.UserProfile)
 	router.POST("/editprofile", middleware.AuthMiddleware("user"), user.EditProfile)
 	router.GET("/viewaddress", middleware.AuthMiddleware("user"), user.ViewAddress)
 	router.POST("profile/addaddress", middleware.AuthMiddleware("user"), user.AddAddress)
 	router.PUT("profile/updateaddress/:id", middleware.AuthMiddleware("user"), user.EditAddress)
 	router.DELETE("/profile/deleteaddress/:id", middleware.AuthMiddleware("user"), user.DeleteAddress)
+
+	//Orders
 	router.GET("/vieworders", middleware.AuthMiddleware("user"), user.ViewOrders)
 	router.DELETE("/orders/:id/delete", middleware.AuthMiddleware("user"), user.CancelOrders)
-	router.PUT("/forgotpassword", middleware.AuthMiddleware("user"), user.ForgotPassword)
+
+	//Cart
+	router.GET("/user/cart", middleware.AuthMiddleware("user"), user.Cart)
+	router.POST("/user/addtocart", middleware.AuthMiddleware("user"), user.AddToCart)
 	//Admin
 	router.POST("/adminlogin", admin.AdminLogin)
 	router.GET("/viewcategories", category.ViewCategory)

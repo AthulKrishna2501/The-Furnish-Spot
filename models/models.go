@@ -10,11 +10,9 @@ type User struct {
 	gorm.Model
 	UserName    string `gorm:"column:user_name;not null"`
 	Email       string `gorm:"column:email;not null"`
-	Password    string `gorm:"column:password;not null"`
+	Password    string `gorm:"column:password;not null" json:"-"`
 	PhoneNumber string `gorm:"column:phonenumber;not null"`
 	Status      string `gorm:"check(status IN('Active', 'Inactive', 'Blocked'))"`
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
 }
 
 type Address struct {
@@ -68,20 +66,12 @@ type Wishlist struct {
 
 type Cart struct {
 	CartID    int `gorm:"primaryKey;autoIncrement"`
-	UserID    int `gorm:"not null;index;foreignKey:UserID;references:UserID"`
-	CreatedAt time.Time
-	DeletedAt *time.Time `gorm:"index"`
-	CartItems []CartItem `gorm:"foreignKey:CartID;references:CartID"`
-}
-
-type CartItem struct {
-	CartItemID int `gorm:"primaryKey;autoIncrement"`
-	CartID     int `gorm:"not null;foreignKey:CartID;references:CartID"`
-	ProductID  int `gorm:"not null;foreignKey:ProductID;references:ProductID"`
-	Total      int
-	Quantity   int
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
+	UserID    int `gorm:"not null;index"`
+	ProductID int `gorm:"not null"`
+	Total     int
+	Quantity  int
+	User      User    `gorm:"foreignKey:UserID"`
+	Product   Product `gorm:"foreignKey:ProductID"`
 }
 
 type Order struct {
