@@ -2,6 +2,7 @@ package user
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	db "github.com/AthulKrishna2501/The-Furniture-Spot/DB"
@@ -98,14 +99,21 @@ func ViewAddress(c *gin.Context) {
 	}
 
 	userID := customClaims.ID
+	fmt.Println(userID)
 
-	result := db.Db.Where("user_id = ?", userID).First(&address)
+	result := db.Db.Where("user_id = ?", userID).Find(&address)
+
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		c.JSON(http.StatusNotFound, gin.H{"message": "Address not found"})
 		return
 	}
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		return
+	}
+
+	if len(address) == 0 {
+		c.JSON(http.StatusOK, gin.H{"message": "No address found"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": address})
