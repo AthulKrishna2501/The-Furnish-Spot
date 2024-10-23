@@ -26,8 +26,7 @@ type Address struct {
 	City         string
 	PostalCode   string
 	Landmark     string
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	DeletedAt    gorm.DeletedAt `gorm:"index"`
 }
 
 type Admin struct {

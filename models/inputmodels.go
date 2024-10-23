@@ -34,3 +34,12 @@ type NewPassword struct {
 	Password    string `json:"password" validate:"required,min=8,max=32"`
 	NewPassword string `json:"newpassword" validate:"required,min=8,max=32"`
 }
+
+type InputAddress struct {
+	AddressLine1 string `json:"addressline1"`
+	AddressLine2 string `json:"addressline2"`
+	Country      string `json:"country"`
+	City         string `json:"city"`
+	PostalCode   string `json:"postalcode"`
+	Landmark     string `json:"landmark"`
+}
