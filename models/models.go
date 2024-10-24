@@ -51,7 +51,7 @@ type Product struct {
 	CategoryID  uint    `gorm:"not null;index;constraint:OnDelete:CASCADE;foreignKey:CategoryID;references:CategoryID" json:"category_id"`
 	ImgURL      string  `json:"img_url"`
 	Status      string  `gorm:"check(status IN('Available', 'Unavailable', 'Out of stock'))"`
-	Quantity    uint    `json:"quantity"`
+	Quantity    int    `json:"quantity"`
 	CreatedAt   time.Time
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
 }
@@ -98,7 +98,8 @@ type OrderItem struct {
 	OrderID      int `gorm:"not null;index;foreignKey:OrderID;references:OrderID"`
 	UserID       int `gorm:"not null;index;foreignKey:UserID;references:UserID"`
 	ProductID    int `gorm:"not null;index;foreignKey:ProductID;references:ProductID"`
-	Price        int
+	Quantity     int
+	Price        float64
 	Discount     int
 }
 

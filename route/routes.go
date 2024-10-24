@@ -39,6 +39,7 @@ func RegisterURL(router *gin.Engine) {
 	//Orders
 	router.GET("/vieworders", middleware.AuthMiddleware("user"), user.ViewOrders)
 	router.DELETE("/orders/:id/delete", middleware.AuthMiddleware("user"), user.CancelOrders)
+	router.POST("/users/order", middleware.AuthMiddleware("user"), user.Orders)
 
 	//Cart
 	router.GET("/user/cart", middleware.AuthMiddleware("user"), user.Cart)
