@@ -138,7 +138,7 @@ func RemoveItem(c *gin.Context) {
 		return
 	}
 
-	product.Quantity += uint(cart.Quantity)
+	product.Quantity += cart.Quantity
 	if err := db.Db.Save(&product).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update product"})
 		return

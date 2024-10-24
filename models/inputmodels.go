@@ -43,3 +43,7 @@ type InputAddress struct {
 	PostalCode   string `json:"postalcode"`
 	Landmark     string `json:"landmark"`
 }
+
+type OrderInput struct {
+	AddressID int `json:"address_id"`
+}
