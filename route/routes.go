@@ -64,6 +64,5 @@ func RegisterURL(router *gin.Engine) {
 
 	router.GET("/admin/listorders", middleware.AuthMiddleware("admin"), order.ListOrders)
 	router.PUT("/admin/changeorderstatus/:id", middleware.AuthMiddleware("admin"), order.ChangeOrderStatus)
-	router.POST("/admin/cancelorder/:id", middleware.AuthMiddleware("admin"), order.CancelOrders)
 
 }
