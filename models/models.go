@@ -84,7 +84,7 @@ type Order struct {
 	CouponID      int `gorm:"foreignKey:CouponID;references:CouponID"`
 	Discount      int
 	Quantity      int
-	Status        string `gorm:"check(status IN('Pending', 'Processing', 'Delivered', 'Canceled'));"`
+	Status        string `gorm:"check(status IN('Pending', 'Shipped', 'Delivered', 'Canceled','Failed'));"`
 	Amount        float64
 	Method        string `gorm:"check(method IN('Credit Card', 'PayPal', 'Bank Transfer'));"`
 	PaymentStatus string `gorm:"check(status IN('Processing', 'Success', 'Failed'));"`

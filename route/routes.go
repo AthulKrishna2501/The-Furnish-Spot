@@ -4,6 +4,7 @@ import (
 	"github.com/AthulKrishna2501/The-Furniture-Spot/admin"
 	adminuser "github.com/AthulKrishna2501/The-Furniture-Spot/admin/adminUser"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/admin/category"
+	"github.com/AthulKrishna2501/The-Furniture-Spot/admin/order"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/admin/product"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/captcha"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/middleware"
@@ -44,6 +45,7 @@ func RegisterURL(router *gin.Engine) {
 	//Cart
 	router.GET("/user/cart", middleware.AuthMiddleware("user"), user.Cart)
 	router.POST("/user/addtocart", middleware.AuthMiddleware("user"), user.AddToCart)
+	router.DELETE("/user/removeitem/:id", middleware.AuthMiddleware("user"), user.RemoveItem)
 	//Admin
 	router.POST("/adminlogin", admin.AdminLogin)
 	router.GET("/viewcategories", category.ViewCategory)
@@ -55,8 +57,14 @@ func RegisterURL(router *gin.Engine) {
 	router.POST("/addproducts", product.AddProducts)
 	router.PUT("/updateproduct/:id", product.UpdateProduct)
 	router.DELETE("/deleteproduct/:id", product.DeleteProduct)
+	router.PUT("/admin/updatestock/:id", product.UpdateProductStock)
 
 	router.GET("/listusers", adminuser.ListUsers)
 	router.POST("blockuser/:id", adminuser.BlockUser)
 	router.POST("/unblockuser/:id", adminuser.UnblockUser)
+
+	router.GET("/admin/listorders", middleware.AuthMiddleware("admin"), order.ListOrders)
+	router.PUT("/admin/changeorderstatus/:id", middleware.AuthMiddleware("admin"), order.ChangeOrderStatus)
+	router.POST("/admin/cancelorder/:id", middleware.AuthMiddleware("admin"), order.CancelOrders)
+
 }
