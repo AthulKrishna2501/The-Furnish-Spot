@@ -27,3 +27,12 @@ type Products struct {
 	Status      string  `gorm:"check(status IN('Available', 'Out of stock'))"`
 	Quantity    int     `json:"quantity"`
 }
+type Address struct {
+	AddressID    int    `gorm:"primaryKey;autoIncrement"`
+	AddressLine1 string `json:"addressline1"`
+	AddressLine2 string `json:"addressline2"`
+	Country      string `json:"country"`
+	City         string `json:"city"`
+	PostalCode   string `json:"postalcode"`
+	Landmark     string `json:"landmark"`
+}

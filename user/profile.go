@@ -73,10 +73,16 @@ func EditProfile(c *gin.Context) {
 		return
 	}
 
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
+		return
+	}
+
 	editUser := models.User{
 		UserName:    input.UserName,
 		Email:       input.Email,
-		Password:    input.Password,
+		Password:    string(hashedPassword),
 		PhoneNumber: input.PhoneNumber,
 	}
 
@@ -85,12 +91,12 @@ func EditProfile(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"User updated successfully": editUser})
+	c.JSON(http.StatusOK, gin.H{"message": "User updated successfully"})
 
 }
 
 func ViewAddress(c *gin.Context) {
-	var address []models.Address
+	var address []responsemodels.Address
 	claims, _ := c.Get("claims")
 	customClaims, ok := claims.(*middleware.Claims)
 
@@ -102,7 +108,7 @@ func ViewAddress(c *gin.Context) {
 	userID := customClaims.ID
 	fmt.Println(userID)
 
-	result := db.Db.Where("user_id = ?", userID).Find(&address)
+	result := db.Db.Where("user_id = ? AND deleted_at IS NULL", userID).Find(&address)
 
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		c.JSON(http.StatusNotFound, gin.H{"message": "Address not found"})
@@ -187,8 +193,8 @@ func CancelOrders(c *gin.Context) {
 }
 
 func ForgotPassword(c *gin.Context) {
-	var user models.User
 	var input models.NewPassword
+	var user models.User
 
 	claims, _ := c.Get("claims")
 	customClaims, ok := claims.(*middleware.Claims)
@@ -209,19 +215,29 @@ func ForgotPassword(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"message": message})
 		return
 	}
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
+	if err := db.Db.Model(&models.User{}).Where("id = ?", userID).Select("password").First(&user).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve user"})
+		return
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password)); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid email or password"})
+		return
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.NewPassword), bcrypt.DefaultCost)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
 		return
 	}
 
-	NewPassword := models.User{
-		Password: string(hashedPassword),
-	}
-	if err := db.Db.Model(&user).Where("id=?", userID).Updates(&NewPassword).Error; err != nil {
+	NewPassword := string(hashedPassword)
+	if err := db.Db.Model(&models.User{}).Where("id = ?", userID).Update("password", NewPassword).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update password"})
 		return
 	}
+	fmt.Println(string(NewPassword))
+
 	c.JSON(http.StatusOK, gin.H{"message": "Password changed successfully"})
 
 }

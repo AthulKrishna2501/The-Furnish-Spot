@@ -121,7 +121,7 @@ func DeleteAddress(c *gin.Context) {
 
 	userID := customClaims.ID
 
-	if err := db.Db.Where("user_id = ?", userID).First(&address).Error; err != nil {
+	if err := db.Db.Where("address_id = ? AND user_id=?", AddressID, userID).First(&address).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"message": "Address not found for this user id"})
 			return
