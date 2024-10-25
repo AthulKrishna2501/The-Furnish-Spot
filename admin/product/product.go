@@ -127,3 +127,27 @@ func DeleteProduct(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Product deleted successfully"})
 }
+
+func UpdateProductStock(c *gin.Context) {
+	var product models.Product
+	productID := c.Param("id")
+
+	if err := db.Db.First(&product, productID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
+		return
+	}
+
+	var input struct {
+		Quantity int `json:"quantity" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	product.Quantity = input.Quantity
+
+	db.Db.Save(&product)
+	c.JSON(http.StatusOK, gin.H{"message": "Stock updated"})
+}
