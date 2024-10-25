@@ -53,31 +53,3 @@ func ChangeOrderStatus(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Order status updated"})
 }
-
-func CancelOrders(c *gin.Context) {
-	var order models.Order
-
-	orderID := c.Param("id")
-
-	if err := db.Db.First(&order, orderID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Order not found"})
-		return
-	}
-
-	if order.Status == "Devilered" || order.Status == "Shipped" || order.Status == "Failed" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid order status"})
-		return
-	}
-
-	order.Status = "Canceled"
-
-	db.Db.Save(&order)
-
-	var product models.Product
-
-	if err := db.Db.First(&product, order.ProductID).Error; err == nil {
-		product.Quantity += order.Quantity
-		db.Db.Save(&product)
-	}
-	c.JSON(http.StatusOK, gin.H{"message": "Order cancelled successfully"})
-}
