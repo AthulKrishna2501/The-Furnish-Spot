@@ -26,9 +26,8 @@ func InitDatabase() {
 		&models.User{},
 		&models.Address{},
 		&models.Admin{},
-		&models.Category{},
-		&models.Cart{},    // Create Cart first
-		&models.Product{}, // Then create Product
+		&models.Category{},  
+		&models.Product{}, 
 		&models.Wishlist{},
 		&models.Order{},
 		&models.OrderItem{},

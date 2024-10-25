@@ -48,14 +48,13 @@ type Product struct {
 	ProductName string  `json:"name"`
 	Description string  `json:"description"`
 	Price       float64 `json:"price"`
-	CategoryID  uint    `gorm:"not null;index;constraint:OnDelete:CASCADE;foreignKey:CategoryID;references:CategoryID" json:"category_id"`
+	CategoryID  uint    `gorm:"not null;index;constraint:OnDelete:CASCADE" json:"category_id"`
 	ImgURL      string  `json:"img_url"`
-	Status      string  `gorm:"check(status IN('Available', 'Unavailable', 'Out of stock'))"`
-	Quantity    int    `json:"quantity"`
+	Status      string  `gorm:"check(status IN('Available', 'Out of stock'))"`
+	Quantity    int     `json:"quantity"`
 	CreatedAt   time.Time
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
 }
-
 type Wishlist struct {
 	WishlistID int `gorm:"primaryKey;autoIncrement"`
 	ProductID  int `gorm:"not null;foreignKey:ProductID;references:ProductID"`
@@ -67,11 +66,11 @@ type Wishlist struct {
 type Cart struct {
 	CartID    int `gorm:"primaryKey;autoIncrement"`
 	UserID    int `gorm:"not null;index"`
-	ProductID int `gorm:"not null"`
+	ProductID int `gorm:"not null"` // foreign key to ProductID
 	Total     int
 	Quantity  int
 	User      User    `gorm:"foreignKey:UserID"`
-	Product   Product `gorm:"foreignKey:ProductID"`
+	Product   Product `gorm:"foreignKey:ProductID"` // Define the Product relationship here
 }
 
 type Order struct {

@@ -47,3 +47,4 @@ type InputAddress struct {
 type OrderInput struct {
 	AddressID int `json:"address_id"`
 }
+

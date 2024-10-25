@@ -26,8 +26,8 @@ func RegisterURL(router *gin.Engine) {
 	router.PUT("/forgotpassword", middleware.AuthMiddleware("user"), user.ForgotPassword)
 
 	//Products
-	router.GET("/products", middleware.AuthMiddleware("user"), user.ViewProducts)
-	router.POST("/search-products", middleware.AuthMiddleware("user"), user.SearchProducts)
+	router.GET("/products", user.ViewProducts)
+	router.GET("/search-products", user.SearchProducts)
 
 	//Profile
 	router.GET("/viewprofile", middleware.AuthMiddleware("user"), user.UserProfile)

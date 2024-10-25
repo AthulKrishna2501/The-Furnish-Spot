@@ -4,12 +4,12 @@ import (
 	"net/http"
 
 	db "github.com/AthulKrishna2501/The-Furniture-Spot/DB"
-	"github.com/AthulKrishna2501/The-Furniture-Spot/models"
+	"github.com/AthulKrishna2501/The-Furniture-Spot/models/responsemodels"
 	"github.com/gin-gonic/gin"
 )
 
 func ViewProducts(c *gin.Context) {
-	var products []models.Product
+	var products []responsemodels.Product
 
 	result := db.Db.Find(&products)
 
