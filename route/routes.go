@@ -27,7 +27,7 @@ func RegisterURL(router *gin.Engine) {
 	//Products
 	router.GET("/products", middleware.AuthMiddleware("user"), user.ViewProducts)
 	router.POST("/search-products", middleware.AuthMiddleware("user"), user.SearchProducts)
-	
+
 
 	//Profile
 	router.GET("/viewprofile", middleware.AuthMiddleware("user"), user.UserProfile)
@@ -45,7 +45,7 @@ func RegisterURL(router *gin.Engine) {
 	//Cart
 	router.GET("/user/cart", middleware.AuthMiddleware("user"), user.Cart)
 	router.POST("/user/addtocart", middleware.AuthMiddleware("user"), user.AddToCart)
-	router.DELETE("/user/removeitem", middleware.AuthMiddleware("user"), user.RemoveItem)
+	router.DELETE("/user/removeitem/:id", middleware.AuthMiddleware("user"), user.RemoveItem)
 	//Admin
 	router.POST("/adminlogin", admin.AdminLogin)
 	router.GET("/viewcategories", category.ViewCategory)
