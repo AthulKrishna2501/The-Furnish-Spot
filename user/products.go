@@ -9,7 +9,7 @@ import (
 )
 
 func ViewProducts(c *gin.Context) {
-	var products []responsemodels.Product
+	var products []responsemodels.Products
 
 	result := db.Db.Find(&products)
 

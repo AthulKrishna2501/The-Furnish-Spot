@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	db "github.com/AthulKrishna2501/The-Furniture-Spot/DB"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/helper"
@@ -152,9 +153,10 @@ func ViewOrders(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": orders})
 
 }
-
 func CancelOrders(c *gin.Context) {
 	var orders models.Order
+	var orderItems []models.OrderItem
+
 	claims, _ := c.Get("claims")
 	customClaims, ok := claims.(*middleware.Claims)
 
@@ -164,32 +166,59 @@ func CancelOrders(c *gin.Context) {
 	}
 
 	userID := customClaims.ID
+	OrderID := c.Param("id")
 
-	OrderID := c.Param("order_id")
+	// Convert OrderID to integer if needed
+	orderID, err := strconv.Atoi(OrderID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid order ID"})
+		return
+	}
 
-	if err := db.Db.Where("order_id= ? AND user_id = ?", OrderID, userID).First(&orders).Error; err != nil {
+	// Check if the order exists and belongs to the user
+	if err := db.Db.Where("order_id = ? AND user_id = ?", orderID, userID).First(&orders).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Order not found or unauthorized"})
 		return
 	}
 
-	if err := db.Db.First(&orders, OrderID).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Order not found"})
-		return
-	}
-
-	if orders.Status == "Canceled" || orders.Status == "Delivered" {
+	// Ensure the order can be canceled
+	if orders.Status == "Canceled" || orders.Status == "Delivered" || orders.Status == "Failed" || orders.Status == "Shipped" {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Cannot cancel order"})
 		return
 	}
-	orders.Status = "Canceled"
 
-	if err := db.Db.Save(&orders).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to save orderstatus"})
+	// Retrieve all items associated with the order
+	if err := db.Db.Where("order_id = ?", orderID).Find(&orderItems).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Order items not found"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Order canceled Successfully"})
+	// Restore product quantities for each item in the order
+	for _, item := range orderItems {
+		var product models.Product
 
+		if err := db.Db.First(&product, item.ProductID).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Product not found"})
+			return
+		}
+
+		// Update the product quantity by adding back the quantity from the canceled order
+		product.Quantity += item.Quantity
+
+		if err := db.Db.Save(&product).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to update product quantity"})
+			return
+		}
+	}
+
+	// Update the order status to "Canceled"
+	orders.Status = "Canceled"
+	if err := db.Db.Save(&orders).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to save order status"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Order canceled successfully"})
 }
 
 func ForgotPassword(c *gin.Context) {

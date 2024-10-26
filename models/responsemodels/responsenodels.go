@@ -1,14 +1,10 @@
 package responsemodels
 
-type Product struct {
-	ProductID   int     `gorm:"primaryKey"`
-	ProductName string  `json:"name"`
-	Description string  `json:"description"`
-	Price       float64 `json:"price"`
-	CategoryID  uint    `gorm:"not null;index;constraint:OnDelete:CASCADE;foreignKey:CategoryID;references:CategoryID" json:"category_id"`
-	ImgURL      string  `json:"img_url"`
-	Status      string  `gorm:"check(status IN('Available', 'Unavailable', 'Out of stock'))"`
-}
+import (
+	"time"
+
+	"github.com/AthulKrishna2501/The-Furniture-Spot/models"
+)
 
 type User struct {
 	UserName    string `gorm:"column:user_name;not null"`
@@ -35,4 +31,24 @@ type Address struct {
 	City         string `json:"city"`
 	PostalCode   string `json:"postalcode"`
 	Landmark     string `json:"landmark"`
+}
+type CartResponse struct {
+	UserID    int    `json:"user_id"`
+	ProductID int    `json:"product_id"`
+	Quantity  int    `json:"quantity"`
+	Total     int    `json:"total"`
+	UserName  string `json:"user_name"`
+	Email     string `json:"email"`
+}
+
+type OrderResponse struct {
+	UserID        int                `json:"user_id"`
+	OrderID       int                `json:"order_id"`
+	Total        float64             `json:"total"`
+	Quantity      int                `json:"quantity"`
+	Status        string             `json:"status"`
+	Method        string             `json:"method"`
+	PaymentStatus string             `json:"payment_status"`
+	OrderDate     time.Time          `json:"order_date"`
+	Items         []models.OrderItem `json:"items"`
 }

@@ -7,6 +7,7 @@ import (
 	db "github.com/AthulKrishna2501/The-Furniture-Spot/DB"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/middleware"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/models"
+	"github.com/AthulKrishna2501/The-Furniture-Spot/models/responsemodels"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -26,18 +27,23 @@ func Cart(c *gin.Context) {
 	}
 
 	userID := customClaims.ID
-	var cart models.Cart
-	if err := db.Db.Preload("User").Preload("Product").Where("user_id = ?", userID).First(&cart).Error; err != nil {
+	var cartItems []responsemodels.CartResponse
+
+
+	if err := db.Db.Table("carts").
+		Select("carts.user_id, carts.product_id, carts.quantity, carts.total, users.user_name, users.email").
+		Joins("join users on users.id = carts.user_id").
+		Where("carts.user_id = ?", userID).
+		Scan(&cartItems).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Cart not found"})
 		return
 	}
 
-	c.JSON(http.StatusOK, cart)
-
+	c.JSON(http.StatusOK, cartItems)
 }
 
 func AddToCart(c *gin.Context) {
-	var item models.Cart
+	var item models.CartInput
 	if err := c.ShouldBindJSON(&item); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
@@ -45,7 +51,6 @@ func AddToCart(c *gin.Context) {
 
 	claims, _ := c.Get("claims")
 	customClaims, ok := claims.(*middleware.Claims)
-
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 		return
@@ -56,57 +61,41 @@ func AddToCart(c *gin.Context) {
 	cartLock.Lock()
 	defer cartLock.Unlock()
 
-	var cart models.Cart
-
-	if err := db.Db.Where("user_id = ?", userID).First(&cart).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-
-			cart = models.Cart{UserID: int(userID)}
-			if err := db.Db.Create(&cart).Error; err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error while creating cart"})
-				return
-			}
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
-			return
-		}
-	}
-
+	var cartItem models.Cart
 	var product models.Product
+
 	if err := db.Db.First(&product, item.ProductID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
 		return
 	}
 
-	if item.Quantity > int(product.Quantity) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Requested quantity exceeds available stock"})
-		return
-	}
+	if err := db.Db.Where("user_id = ? AND product_id = ?", userID, item.ProductID).First(&cartItem).Error; err == nil {
 
-	var existingCartItem models.Cart
-	if err := db.Db.Where("cart_id = ? AND product_id = ?", cart.CartID, item.ProductID).First(&existingCartItem).Error; err == nil {
-		existingCartItem.Quantity += item.Quantity
-		existingCartItem.Total = existingCartItem.Quantity * int(product.Price)
-		if err := db.Db.Save(&existingCartItem).Error; err != nil {
+		cartItem.Quantity += item.Quantity
+		cartItem.Total = cartItem.Quantity * int(product.Price) 
+		if err := db.Db.Save(&cartItem).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error updating cart item"})
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"message": "Item quantity updated"})
+		return
 	} else if err == gorm.ErrRecordNotFound {
-		if item.Quantity > MaxQuantity {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot exceed maximum quantity limit per user"})
-			return
-		}
 
-		item.CartID = cart.CartID
-		item.Total = item.Quantity * int(product.Price)
-		if err := db.Db.Create(&item).Error; err != nil {
+		newCartItem := models.Cart{
+			UserID:    int(userID),
+			ProductID: item.ProductID,
+			Quantity:  item.Quantity,
+			Total:     item.Quantity * int(product.Price), 
+		}
+		if err := db.Db.Create(&newCartItem).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error adding item to cart"})
 			return
 		}
 		c.JSON(http.StatusCreated, gin.H{"message": "Item added to cart"})
+		return
 	} else {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+		return
 	}
 }
 

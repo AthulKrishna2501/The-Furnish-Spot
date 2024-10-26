@@ -48,3 +48,7 @@ type OrderInput struct {
 	AddressID int `json:"address_id"`
 }
 
+type CartInput struct {
+	ProductID int `json:"product_id"`
+	Quantity  int `json:"quantity"`
+}

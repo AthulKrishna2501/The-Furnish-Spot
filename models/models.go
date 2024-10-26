@@ -72,34 +72,31 @@ type Cart struct {
 	User      User    `gorm:"foreignKey:UserID"`
 	Product   Product `gorm:"foreignKey:ProductID"` // Define the Product relationship here
 }
-
 type Order struct {
 	OrderID       int `gorm:"primaryKey;autoIncrement"`
-	UserID        int `gorm:"not null;index;foreignKey:UserID;references:UserID"`
-	ProductID     int `gorm:"not null;index;foreignKey:ProductID;references:ProductID"`
+	UserID        int `gorm:"not null;index"` // Foreign key reference to users table, UserID in users should be defined in the User model
 	PaymentID     int
-	OrderDate     time.Time
-	Total         int
-	CouponID      int `gorm:"foreignKey:CouponID;references:CouponID"`
-	Discount      int
-	Quantity      int
-	Status        string `gorm:"check(status IN('Pending', 'Shipped', 'Delivered', 'Canceled','Failed'));"`
-	Amount        float64
-	Method        string `gorm:"check(method IN('Credit Card', 'PayPal', 'Bank Transfer'));"`
-	PaymentStatus string `gorm:"check(status IN('Processing', 'Success', 'Failed'));"`
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
-	OrderItems    []OrderItem `gorm:"foreignKey:OrderID;references:OrderID"`
+	OrderDate     time.Time   `gorm:"type:timestamp;default:CURRENT_TIMESTAMP"`
+	Total         float64       `gorm:"not null"`
+	CouponID      int         `gorm:"index"` // Assuming this is a foreign key, include index
+	Discount      int         `gorm:"default:0"`
+	Quantity      int         `gorm:"default:0"`
+	Status        string      `gorm:"check(status IN('Pending', 'Shipped', 'Delivered', 'Canceled','Failed'))"`
+	Method        string      `gorm:"check(method IN('Credit Card', 'PayPal', 'Bank Transfer'))"`
+	PaymentStatus string      `gorm:"check(payment_status IN('Processing', 'Success', 'Failed'))"`
+	CreatedAt     time.Time   `gorm:"autoCreateTime"`
+	UpdatedAt     time.Time   `gorm:"autoUpdateTime"`
+	OrderItems    []OrderItem `gorm:"foreignKey:OrderID"` 
 }
 
 type OrderItem struct {
-	OrderItemsID int `gorm:"primaryKey;autoIncrement"`
-	OrderID      int `gorm:"not null;index;foreignKey:OrderID;references:OrderID"`
-	UserID       int `gorm:"not null;index;foreignKey:UserID;references:UserID"`
-	ProductID    int `gorm:"not null;index;foreignKey:ProductID;references:ProductID"`
-	Quantity     int
-	Price        float64
-	Discount     int
+	OrderItemsID int     `gorm:"primaryKey;autoIncrement"`
+	OrderID      int     `gorm:"not null;index"` 
+	UserID       int     `gorm:"not null;index"` 
+	ProductID    int     `gorm:"not null;index"` 
+	Quantity     int     `gorm:"default:0"`
+	Price        float64 `gorm:"not null"`
+	Discount     int     `gorm:"default:0"`
 }
 
 type Coupon struct {
