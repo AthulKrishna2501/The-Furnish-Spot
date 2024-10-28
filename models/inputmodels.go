@@ -33,6 +33,7 @@ type EditUser struct {
 type NewPassword struct {
 	Password    string `json:"password" validate:"required,min=8,max=32"`
 	NewPassword string `json:"newpassword" validate:"required,min=8,max=32"`
+	ReEnter     string `json:"reenter" validate:"required,min=8,max=32"`
 }
 
 type InputAddress struct {
@@ -40,7 +41,7 @@ type InputAddress struct {
 	AddressLine2 string `json:"addressline2"`
 	Country      string `json:"country"`
 	City         string `json:"city"`
-	PostalCode   string `json:"postalcode"`
+	PostalCode   uint   `json:"postalcode" validate:"required,min=5,max=6"`
 	Landmark     string `json:"landmark"`
 }
 

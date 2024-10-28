@@ -14,6 +14,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func UserProfile(c *gin.Context) {
@@ -33,6 +35,10 @@ func UserProfile(c *gin.Context) {
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		c.JSON(http.StatusNotFound, gin.H{"message": "User not found"})
 		return
+	}
+
+	if user.Status == "" {
+		user.Status = "Available"
 	}
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
@@ -140,7 +146,7 @@ func ViewOrders(c *gin.Context) {
 
 	userID := customClaims.ID
 
-	result := db.Db.Where("user_id=?", userID).Find(&orders)
+	result := db.Db.Where("user_id = ?", userID).Preload("OrderItems").Find(&orders)
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "No orders found"})
 		return
@@ -150,9 +156,10 @@ func ViewOrders(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "No orders found"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": orders})
 
+	c.JSON(http.StatusOK, gin.H{"message": orders})
 }
+
 func CancelOrders(c *gin.Context) {
 	var orders models.Order
 	var orderItems []models.OrderItem
@@ -168,32 +175,27 @@ func CancelOrders(c *gin.Context) {
 	userID := customClaims.ID
 	OrderID := c.Param("id")
 
-	// Convert OrderID to integer if needed
 	orderID, err := strconv.Atoi(OrderID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid order ID"})
 		return
 	}
 
-	// Check if the order exists and belongs to the user
 	if err := db.Db.Where("order_id = ? AND user_id = ?", orderID, userID).First(&orders).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Order not found or unauthorized"})
 		return
 	}
 
-	// Ensure the order can be canceled
 	if orders.Status == "Canceled" || orders.Status == "Delivered" || orders.Status == "Failed" || orders.Status == "Shipped" {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Cannot cancel order"})
 		return
 	}
 
-	// Retrieve all items associated with the order
 	if err := db.Db.Where("order_id = ?", orderID).Find(&orderItems).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Order items not found"})
 		return
 	}
 
-	// Restore product quantities for each item in the order
 	for _, item := range orderItems {
 		var product models.Product
 
@@ -202,7 +204,6 @@ func CancelOrders(c *gin.Context) {
 			return
 		}
 
-		// Update the product quantity by adding back the quantity from the canceled order
 		product.Quantity += item.Quantity
 
 		if err := db.Db.Save(&product).Error; err != nil {
@@ -211,7 +212,6 @@ func CancelOrders(c *gin.Context) {
 		}
 	}
 
-	// Update the order status to "Canceled"
 	orders.Status = "Canceled"
 	if err := db.Db.Save(&orders).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to save order status"})
@@ -250,7 +250,16 @@ func ForgotPassword(c *gin.Context) {
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password)); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid email or password"})
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid password"})
+		return
+	}
+
+	if input.NewPassword != input.ReEnter {
+		log.WithFields(log.Fields{
+			"UserID": userID,
+		}).Error("Password mismatch")
+
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Password does not match"})
 		return
 	}
 

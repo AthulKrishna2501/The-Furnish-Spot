@@ -2,8 +2,6 @@ package responsemodels
 
 import (
 	"time"
-
-	"github.com/AthulKrishna2501/The-Furniture-Spot/models"
 )
 
 type User struct {
@@ -42,13 +40,12 @@ type CartResponse struct {
 }
 
 type OrderResponse struct {
-	UserID        int                `json:"user_id"`
-	OrderID       int                `json:"order_id"`
-	Total        float64             `json:"total"`
-	Quantity      int                `json:"quantity"`
-	Status        string             `json:"status"`
-	Method        string             `json:"method"`
-	PaymentStatus string             `json:"payment_status"`
-	OrderDate     time.Time          `json:"order_date"`
-	Items         []models.OrderItem `json:"items"`
+	UserID        int       `json:"user_id"`
+	OrderID       int       `json:"order_id"`
+	Total         float64   `json:"total"`
+	Quantity      int       `json:"quantity"`
+	Status        string    `json:"status"`
+	Method        string    `json:"method"`
+	PaymentStatus string    `json:"payment_status"`
+	OrderDate     time.Time `json:"order_date"`
 }

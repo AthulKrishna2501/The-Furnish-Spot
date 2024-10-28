@@ -41,7 +41,7 @@ func ValidateAddress(input any) (string, error) {
 				return "street address must be between 3 and 100 characters", fmt.Errorf("invalid street address")
 			case "City":
 				return "city must be between 2 and 50 characters", fmt.Errorf("invalid city")
-			case "PostaCode":
+			case "PostalCode":
 				return "ZIP/postal code must be 5 or 6 characters", fmt.Errorf("invalid ZIP/postal code")
 			case "Country":
 				return "invalid country code (use 2-letter ISO code)", fmt.Errorf("invalid country code")

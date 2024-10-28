@@ -12,10 +12,17 @@ import (
 
 func ViewProducts(c *gin.Context) {
 	var products []models.Product
-	result := db.Db.Find(&products)
+	result := db.Db.Order("product_id ASC").Find(&products)
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return
+	}
+
+	for i := range products {
+		if products[i].Quantity == 0 {
+			products[i].Status = "Out of stock"
+			db.Db.Model(&products[i]).Update("status", products[i].Status)
+		}
 	}
 
 	if len(products) == 0 {

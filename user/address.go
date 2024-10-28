@@ -47,7 +47,6 @@ func AddAddress(c *gin.Context) {
 		UserID:       int(userID),
 		AddressLine1: input.AddressLine1,
 		AddressLine2: input.AddressLine2,
-		Country:      input.Country,
 		City:         input.City,
 		PostalCode:   input.PostalCode,
 		Landmark:     input.Landmark,

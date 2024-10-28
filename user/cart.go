@@ -29,7 +29,6 @@ func Cart(c *gin.Context) {
 	userID := customClaims.ID
 	var cartItems []responsemodels.CartResponse
 
-
 	if err := db.Db.Table("carts").
 		Select("carts.user_id, carts.product_id, carts.quantity, carts.total, users.user_name, users.email").
 		Joins("join users on users.id = carts.user_id").
@@ -38,7 +37,10 @@ func Cart(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Cart not found"})
 		return
 	}
-
+	if len(cartItems) == 0 {
+		c.JSON(http.StatusOK, gin.H{"message": "Cart is empty"})
+		return
+	}
 	c.JSON(http.StatusOK, cartItems)
 }
 
@@ -68,15 +70,26 @@ func AddToCart(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
 		return
 	}
+	if item.Quantity > product.Quantity {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "There is no sufficient quantity"})
+		return
+	}
+
+	if item.Quantity > MaxQuantity {
+		c.JSON(http.StatusOK, gin.H{"message": "Quantity limit exceeded"})
+		return
+	}
 
 	if err := db.Db.Where("user_id = ? AND product_id = ?", userID, item.ProductID).First(&cartItem).Error; err == nil {
-
 		cartItem.Quantity += item.Quantity
-		cartItem.Total = cartItem.Quantity * int(product.Price) 
+		cartItem.Total = cartItem.Quantity * int(product.Price)
+		product.Quantity -= item.Quantity
 		if err := db.Db.Save(&cartItem).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error updating cart item"})
 			return
 		}
+		db.Db.Save(&product)
+
 		c.JSON(http.StatusOK, gin.H{"message": "Item quantity updated"})
 		return
 	} else if err == gorm.ErrRecordNotFound {
@@ -85,13 +98,18 @@ func AddToCart(c *gin.Context) {
 			UserID:    int(userID),
 			ProductID: item.ProductID,
 			Quantity:  item.Quantity,
-			Total:     item.Quantity * int(product.Price), 
+			Total:     item.Quantity * int(product.Price),
 		}
 		if err := db.Db.Create(&newCartItem).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error adding item to cart"})
 			return
 		}
+
+		product.Quantity -= item.Quantity
+		db.Db.Save(&product)
+
 		c.JSON(http.StatusCreated, gin.H{"message": "Item added to cart"})
+		product.Quantity -= item.Quantity
 		return
 	} else {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})

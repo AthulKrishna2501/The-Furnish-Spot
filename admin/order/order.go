@@ -21,7 +21,7 @@ func ListOrders(c *gin.Context) {
 	var orderResponses []responsemodels.OrderResponse
 
 	for _, order := range orders {
-		fmt.Printf("Order ID: %d, Status: %s\n", order.OrderID, order.Status) 
+		fmt.Printf("Order ID: %d, Status: %s\n", order.OrderID, order.Status)
 
 		var totalQuantity int
 		var orderItems []models.OrderItem
@@ -30,7 +30,7 @@ func ListOrders(c *gin.Context) {
 				totalQuantity += item.Quantity
 			}
 		} else {
-			fmt.Printf("Error fetching items for Order ID %d: %v\n", order.OrderID, err) // Debugging log
+			fmt.Printf("Error fetching items for Order ID %d: %v\n", order.OrderID, err)
 		}
 
 		orderResponses = append(orderResponses, responsemodels.OrderResponse{
@@ -67,8 +67,8 @@ func ChangeOrderStatus(c *gin.Context) {
 		return
 	}
 
-	if order.Status=="Delivered" || order.Status == "Shipped" ||order.Status=="Failed" || order.Status == "Canceled"{
-		c.JSON(http.StatusBadRequest,gin.H{"message":"Invalid status"})
+	if order.Status == "Delivered" || order.Status == "Shipped" || order.Status == "Failed" || order.Status == "Canceled" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid status"})
 		return
 	}
 

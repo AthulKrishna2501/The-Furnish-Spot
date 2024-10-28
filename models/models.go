@@ -22,7 +22,7 @@ type Address struct {
 	AddressLine2 string
 	Country      string
 	City         string
-	PostalCode   string
+	PostalCode   uint
 	Landmark     string
 	DeletedAt    gorm.DeletedAt `gorm:"index"`
 }
@@ -51,7 +51,7 @@ type Product struct {
 	CategoryID  uint    `gorm:"not null;index;constraint:OnDelete:CASCADE" json:"category_id"`
 	ImgURL      string  `json:"img_url"`
 	Status      string  `gorm:"check(status IN('Available', 'Out of stock'))"`
-	Quantity    int     `json:"quantity"`
+	Quantity    int     `json:"quantity" gorm:"default:0"`
 	CreatedAt   time.Time
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
 }
@@ -66,19 +66,19 @@ type Wishlist struct {
 type Cart struct {
 	CartID    int `gorm:"primaryKey;autoIncrement"`
 	UserID    int `gorm:"not null;index"`
-	ProductID int `gorm:"not null"` // foreign key to ProductID
+	ProductID int `gorm:"not null"`
 	Total     int
 	Quantity  int
 	User      User    `gorm:"foreignKey:UserID"`
-	Product   Product `gorm:"foreignKey:ProductID"` // Define the Product relationship here
+	Product   Product `gorm:"foreignKey:ProductID"`
 }
 type Order struct {
 	OrderID       int `gorm:"primaryKey;autoIncrement"`
-	UserID        int `gorm:"not null;index"` // Foreign key reference to users table, UserID in users should be defined in the User model
+	UserID        int `gorm:"not null;index"`
 	PaymentID     int
 	OrderDate     time.Time   `gorm:"type:timestamp;default:CURRENT_TIMESTAMP"`
-	Total         float64       `gorm:"not null"`
-	CouponID      int         `gorm:"index"` // Assuming this is a foreign key, include index
+	Total         float64     `gorm:"not null"`
+	CouponID      int         `gorm:"index"`
 	Discount      int         `gorm:"default:0"`
 	Quantity      int         `gorm:"default:0"`
 	Status        string      `gorm:"check(status IN('Pending', 'Shipped', 'Delivered', 'Canceled','Failed'))"`
@@ -86,14 +86,14 @@ type Order struct {
 	PaymentStatus string      `gorm:"check(payment_status IN('Processing', 'Success', 'Failed'))"`
 	CreatedAt     time.Time   `gorm:"autoCreateTime"`
 	UpdatedAt     time.Time   `gorm:"autoUpdateTime"`
-	OrderItems    []OrderItem `gorm:"foreignKey:OrderID"` 
+	OrderItems    []OrderItem `gorm:"foreignKey:OrderID"`
 }
 
 type OrderItem struct {
 	OrderItemsID int     `gorm:"primaryKey;autoIncrement"`
-	OrderID      int     `gorm:"not null;index"` 
-	UserID       int     `gorm:"not null;index"` 
-	ProductID    int     `gorm:"not null;index"` 
+	OrderID      int     `gorm:"not null;index"`
+	UserID       int     `gorm:"not null;index"`
+	ProductID    int     `gorm:"not null;index"`
 	Quantity     int     `gorm:"default:0"`
 	Price        float64 `gorm:"not null"`
 	Discount     int     `gorm:"default:0"`
