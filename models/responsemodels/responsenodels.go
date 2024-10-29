@@ -49,3 +49,12 @@ type OrderResponse struct {
 	PaymentStatus string    `json:"payment_status"`
 	OrderDate     time.Time `json:"order_date"`
 }
+
+type Wishlist struct {
+	UserID      int    `json:"user_id"`
+	ProductID   int    `json:"product_id"`
+	ProductName string `json:"product_name"`
+	Price       int    `json:"price"`
+	Quantity    int    `json:"quantity"`
+	
+}

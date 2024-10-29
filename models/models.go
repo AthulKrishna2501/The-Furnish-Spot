@@ -56,11 +56,14 @@ type Product struct {
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
 }
 type Wishlist struct {
-	WishlistID int `gorm:"primaryKey;autoIncrement"`
-	ProductID  int `gorm:"not null;foreignKey:ProductID;references:ProductID"`
-	UserID     int `gorm:"not null;index;foreignKey:UserID;references:UserID"`
-	CreatedAt  time.Time
-	DeletedAt  *time.Time `gorm:"index"`
+	WishlistID  int `gorm:"primaryKey;autoIncrement"`
+	UserID      int `gorm:"not null;index;foreignKey:UserID;references:UserID"`
+	ProductID   int `gorm:"not null;foreignKey:ProductID;references:ProductID"`
+	ProductName string
+	Price       int
+	Quantity    int
+	CreatedAt   time.Time
+	DeletedAt   gorm.DeletedAt `gorm:"index"`
 }
 
 type Cart struct {
@@ -102,13 +105,13 @@ type OrderItem struct {
 type Coupon struct {
 	CouponID             int    `gorm:"primaryKey;autoIncrement"`
 	CouponCode           string `gorm:"unique"`
-	CouponDiscountAmount int
+	DiscountAmount uint
 	Description          string
 	StartDate            time.Time
-	Period               int
+	EndDate               time.Time
 	MinPurchaseAmount    int
 	MaxPurchaseAmount    int
-	IsActive             string `gorm:"check(is_active IN('Active', 'Inactive'))"`
+	IsActive             bool 
 }
 
 type ReviewRating struct {

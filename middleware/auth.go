@@ -78,3 +78,19 @@ func AuthMiddleware(requiredRole string) gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+func GetClaims(c *gin.Context) (*Claims, error) {
+	claims, exists := c.Get("claims")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing claims"})
+		return nil, nil
+	}
+
+	customClaims, ok := claims.(*Claims)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		return nil, nil
+	}
+
+	return customClaims, nil
+}

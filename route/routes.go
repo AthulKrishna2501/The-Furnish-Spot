@@ -47,6 +47,12 @@ func RegisterURL(router *gin.Engine) {
 	router.POST("/user/addtocart", middleware.AuthMiddleware("user"), user.AddToCart)
 	router.DELETE("user/removeitem/:id", middleware.AuthMiddleware("user"), user.RemoveItem)
 
+	//Whishlist
+	router.GET("/user/viewwhishlist", middleware.AuthMiddleware("user"), user.ViewWhishlist)
+	router.POST("/user/addtowhishlist", middleware.AuthMiddleware("user"), user.AddToWhishlist)
+	router.DELETE("/user/removeitem", middleware.AuthMiddleware("user"), user.WishlistRemoveItem)
+	router.DELETE("/user/clearwishlist", middleware.AuthMiddleware("user"), user.ClearWishlist)
+
 	//Admin
 	router.POST("/adminlogin", admin.AdminLogin)
 	router.GET("/viewcategories", category.ViewCategory)

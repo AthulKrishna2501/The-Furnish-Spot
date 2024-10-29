@@ -78,7 +78,7 @@ func Orders(c *gin.Context) {
 		}
 
 		itemPrice := float64(item.Quantity) * product.Price
-		totalAmount += itemPrice      
+		totalAmount += itemPrice
 		totalQuantity += item.Quantity
 
 		fmt.Printf("Item Price for Product ID %d: %.2f (Quantity: %d)\n", productID, itemPrice, item.Quantity)
@@ -115,7 +115,7 @@ func Orders(c *gin.Context) {
 	}
 
 	for _, item := range orderItems {
-		item.OrderID = order.OrderID 
+		item.OrderID = order.OrderID
 		if err := db.Db.Create(&item).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not save order items", "details": err.Error()})
 			return

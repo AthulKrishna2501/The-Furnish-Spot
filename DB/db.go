@@ -32,10 +32,10 @@ func InitDatabase() {
 		&models.Order{},
 		&models.OrderItem{},
 		&models.Coupon{},
-
 		&models.ReviewRating{},
 		&models.OTP{},
 		&models.TempUser{},
+		&models.Wishlist{},
 	)
 	if err != nil {
 		log.Fatalf("Migration failed: %v", err)
