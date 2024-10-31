@@ -41,6 +41,7 @@ func RegisterURL(router *gin.Engine) {
 	router.GET("/vieworders", middleware.AuthMiddleware("user"), user.ViewOrders)
 	router.DELETE("/orders/:id/delete", middleware.AuthMiddleware("user"), user.CancelOrders)
 	router.POST("/users/order", middleware.AuthMiddleware("user"), user.Orders)
+	router.GET("/paypal/confirmpayment", user.CapturePayPalOrder)
 
 	//Cart
 	router.GET("/user/cart", middleware.AuthMiddleware("user"), user.Cart)
@@ -52,6 +53,9 @@ func RegisterURL(router *gin.Engine) {
 	router.POST("/user/addtowhishlist", middleware.AuthMiddleware("user"), user.AddToWhishlist)
 	router.DELETE("/user/removeitem", middleware.AuthMiddleware("user"), user.WishlistRemoveItem)
 	router.DELETE("/user/clearwishlist", middleware.AuthMiddleware("user"), user.ClearWishlist)
+
+	//Coupons
+	router.GET("/coupons", middleware.AuthMiddleware("user"), user.ViewCoupons)
 
 	//Admin
 	router.POST("/adminlogin", admin.AdminLogin)

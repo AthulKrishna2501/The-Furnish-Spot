@@ -41,12 +41,14 @@ type InputAddress struct {
 	AddressLine2 string `json:"addressline2"`
 	Country      string `json:"country"`
 	City         string `json:"city"`
-	PostalCode   uint   `json:"postalcode" validate:"required,min=5,max=6"`
+	PostalCode   string `json:"postalcode" validate:"required,len=6,numeric"`
 	Landmark     string `json:"landmark"`
 }
 
 type OrderInput struct {
-	AddressID int `json:"address_id"`
+	AddressID  int    `json:"address_id"`
+	CouponCode string `json:"coupon_code,omitempty"`
+	Method     string `json:"method,omitempty"`
 }
 
 type CartInput struct {

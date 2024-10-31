@@ -40,14 +40,15 @@ type CartResponse struct {
 }
 
 type OrderResponse struct {
-	UserID        int       `json:"user_id"`
-	OrderID       int       `json:"order_id"`
-	Total         float64   `json:"total"`
-	Quantity      int       `json:"quantity"`
-	Status        string    `json:"status"`
-	Method        string    `json:"method"`
-	PaymentStatus string    `json:"payment_status"`
-	OrderDate     time.Time `json:"order_date"`
+	UserID         int       `json:"user_id"`
+	OrderID        int       `json:"order_id"`
+	Total          float64   `json:"total"`
+	Quantity       int       `json:"quantity"`
+	DiscountAmount float64   `json:"discount_amount"`
+	Status         string    `json:"status"`
+	Method         string    `json:"method"`
+	PaymentStatus  string    `json:"payment_status"`
+	OrderDate      time.Time `json:"order_date"`
 }
 
 type Wishlist struct {
@@ -56,5 +57,4 @@ type Wishlist struct {
 	ProductName string `json:"product_name"`
 	Price       int    `json:"price"`
 	Quantity    int    `json:"quantity"`
-	
 }

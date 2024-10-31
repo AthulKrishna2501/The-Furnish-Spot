@@ -2,6 +2,8 @@ package user
 
 import (
 	"fmt"
+	"log"
+	"math"
 	"net/http"
 	"sync"
 	"time"
@@ -10,29 +12,27 @@ import (
 	"github.com/AthulKrishna2501/The-Furniture-Spot/middleware"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/models"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/models/responsemodels"
+	"github.com/AthulKrishna2501/The-Furniture-Spot/util"
 	"github.com/gin-gonic/gin"
 )
 
 func Orders(c *gin.Context) {
 	var input models.OrderInput
 	var address models.Address
+	var order models.Order
+	var coupon models.Coupon
 	var cart []models.Cart
+
 
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Input"})
 		return
 	}
 
-	claims, _ := c.Get("claims")
-	customClaims, ok := claims.(*middleware.Claims)
-	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
-		return
-	}
+	claims, _ := middleware.GetClaims(c)
+	userID := claims.ID
 
-	userID := customClaims.ID
-
-	if err := db.Db.Where("user_id=? AND address_id =?", userID, input.AddressID).First(&address).Error; err != nil {
+	if err := db.Db.Where("user_id=? AND address_id=?", userID, input.AddressID).First(&address).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Address not found"})
 		return
 	}
@@ -45,8 +45,6 @@ func Orders(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Could not fetch cart", "details": err.Error()})
 		return
 	}
-
-	fmt.Printf("Fetched Cart Contents: %+v\n", cart)
 
 	if len(cart) == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Cart is empty"})
@@ -64,13 +62,10 @@ func Orders(c *gin.Context) {
 	for _, item := range cart {
 		productID := item.ProductID
 		product := models.Product{}
-
 		if err := db.Db.First(&product, productID).Error; err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Product not found", "product_id": productID})
 			return
 		}
-
-		fmt.Printf("Product ID: %d, Price: %.2f, Cart Quantity: %d\n", product.ProductID, product.Price, item.Quantity)
 
 		if product.Quantity < item.Quantity {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Insufficient stock for product", "product_id": product.ProductID})
@@ -80,8 +75,6 @@ func Orders(c *gin.Context) {
 		itemPrice := float64(item.Quantity) * product.Price
 		totalAmount += itemPrice
 		totalQuantity += item.Quantity
-
-		fmt.Printf("Item Price for Product ID %d: %.2f (Quantity: %d)\n", productID, itemPrice, item.Quantity)
 
 		orderItem := models.OrderItem{
 			ProductID: productID,
@@ -96,26 +89,77 @@ func Orders(c *gin.Context) {
 			return
 		}
 	}
+	var discount float64
+	if input.CouponCode != "" {
+		if err := db.Db.Where("coupon_code = ? AND is_active = ?", input.CouponCode, true).First(&coupon).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Invalid or expired coupon"})
+			return
+		}
 
-	fmt.Printf("Total Amount Calculated: %.2f\n", totalAmount)
-	fmt.Printf("Total Quantity Calculated: %d\n", totalQuantity)
+		if totalAmount < float64(coupon.MinPurchaseAmount) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Order total does not meet coupon's minimum value requirement"})
+			return
+		}
 
-	order := models.Order{
-		UserID:        int(userID),
-		Total:         totalAmount,
-		OrderDate:     time.Now(),
-		Status:        "Pending",
-		Method:        "COD",
-		PaymentStatus: "Processing",
+		if coupon.DiscountType == "percentage" {
+			discount = (coupon.DiscountAmount / 100) * totalAmount
+		} else {
+			discount = coupon.DiscountAmount
+		}
+		totalAmount -= discount
 	}
 
-	if err := db.Db.Create(&order).Error; err != nil {
+	if input.Method == "Paypal" {
+		Total, err := util.ConvertINRtoUSD(totalAmount)
+		if err != nil {
+			log.Printf("Could not convert INR to USD: %v\n", err)
+		}
+		RoundedTotal := math.Round(Total*100) / 100
+
+		client, err := NewPayPalClient()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize PayPal client"})
+			return
+		}
+
+		approvalURL, err := CreatePayPalPayment(client, RoundedTotal)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create PayPal order"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"approval_url": approvalURL})
+		order.PaymentStatus = "Processing"
+
+	} else if input.Method == "COD" {
+		order.PaymentStatus = "Pending"
+
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid payment method"})
+		return
+	}
+
+	orders := models.Order{
+		UserID:        int(userID),
+		Total:         totalAmount,
+		Quantity:      totalQuantity,
+		Discount:      int(discount),
+		CouponID:      coupon.CouponID,
+		OrderDate:     time.Now(),
+		Status:        "Pending",
+		Method:        input.Method,
+		PaymentStatus: order.PaymentStatus,
+	}
+	fmt.Println(orders)
+
+	if err := db.Db.Create(&orders).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not place order", "details": err.Error()})
 		return
 	}
 
 	for _, item := range orderItems {
-		item.OrderID = order.OrderID
+		item.OrderID = orders.OrderID
+
 		if err := db.Db.Create(&item).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not save order items", "details": err.Error()})
 			return
@@ -128,17 +172,18 @@ func Orders(c *gin.Context) {
 	}
 
 	orderResponse := responsemodels.OrderResponse{
-		UserID:        int(userID),
-		OrderID:       order.OrderID,
-		Total:         totalAmount,
-		Quantity:      totalQuantity,
-		Status:        order.Status,
-		Method:        order.Method,
-		PaymentStatus: order.PaymentStatus,
-		OrderDate:     order.OrderDate,
+		UserID:         int(userID),
+		OrderID:        orders.OrderID,
+		Quantity:       totalQuantity,
+		DiscountAmount: discount,
+		Total:          totalAmount,
+		Status:         orders.Status,
+		Method:         orders.Method,
+		PaymentStatus:  order.PaymentStatus,
+		OrderDate:      orders.OrderDate,
 	}
-
-	fmt.Printf("Order Response: %+v\n", orderResponse)
+	fmt.Println(orderResponse)
 
 	c.JSON(http.StatusOK, gin.H{"message": "Order placed successfully", "order": orderResponse})
+
 }

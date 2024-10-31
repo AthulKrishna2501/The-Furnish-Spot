@@ -3,87 +3,81 @@ package user
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
-	"sync"
 
-	db "github.com/AthulKrishna2501/The-Furniture-Spot/DB"
-	"github.com/AthulKrishna2501/The-Furniture-Spot/middleware"
-	"github.com/AthulKrishna2501/The-Furniture-Spot/models"
 	"github.com/gin-gonic/gin"
 	"github.com/plutov/paypal/v4"
-	log "github.com/sirupsen/logrus"
 )
 
-func PaypalOrder(c *gin.Context) {
-	ClientID := os.Getenv("CLIENT_ID")
-	Secret := os.Getenv("SECRET")
-	// isSandbox := true
-
-	client, err := paypal.NewClient(ClientID, Secret, paypal.APIBaseSandBox)
+func NewPayPalClient() (*paypal.Client, error) {
+	client, err := paypal.NewClient(os.Getenv("CLIENT_ID"), os.Getenv("SECRET"), paypal.APIBaseSandBox)
 	if err != nil {
-		log.Fatalf("Failed to create paypal client :%v", err)
-
+		return nil, err
 	}
-	client.SetLog(os.Stdout)
+	client.SetLog(log.Writer())
+	return client, nil
+}
 
-	_, err = client.GetAccessToken(context.Background())
+func CreatePayPalPayment(client *paypal.Client, amount float64) (string, error) {
+	purchaseUnit := paypal.PurchaseUnitRequest{
+		Amount: &paypal.PurchaseUnitAmount{
+			Currency: "USD",
+			Value:    fmt.Sprintf("%.2f", amount),
+		},
+	}
+
+	applicationContext := paypal.ApplicationContext{
+		ReturnURL: "http://localhost:3000/paypal/confirmpayment",
+		CancelURL: "http://localhost:3000/paypal/cancel-payment",
+	}
+	order, err := client.CreateOrder(
+		context.Background(),
+		paypal.OrderIntentCapture,
+		[]paypal.PurchaseUnitRequest{purchaseUnit},
+		nil,
+		&applicationContext,
+	)
 	if err != nil {
-		log.Fatalf("Failed to get access token: %v", err)
+		return "", err
 	}
-	fmt.Println("PayPal client initialized successfully")
 
-	claims, _ := c.Get("claims")
+	for _, link := range order.Links {
+		if link.Rel == "approve" {
+			return link.Href, nil
+		}
+	}
 
-	customClaims, ok := claims.(*middleware.Claims)
-	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+	return "", fmt.Errorf("no approval link found in PayPal response")
+}
+
+func CapturePayPalOrder(c *gin.Context) {
+	client, err := NewPayPalClient()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize PayPal client"})
 		return
 	}
 
-	var input models.OrderInput
-	var address models.Address
-	var cart []models.Cart
+	orderID := c.Query("token")
+	if orderID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Order ID missing from query parameters"})
+		return
+	}
+	captureRequest := paypal.CaptureOrderRequest{}
 
-	userID := customClaims.ID
+	order, err := client.CaptureOrder(context.Background(), orderID, captureRequest)
 
-	if err := c.ShouldBindJSON(&input); err != nil {
-		log.Printf("Failed to bind JSON:%v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to capture PayPal order", "details": err.Error()})
 		return
 	}
 
-	if err := db.Db.Where("user_id=? AND address_id", userID, input.AddressID).First(&address).Error; err != nil {
-		log.WithFields(log.Fields{
-			"UserID":    userID,
-			"AddressID": input.AddressID,
-		}).Error("Failed to retrive address")
-
-		c.JSON(http.StatusNotFound, gin.H{"error": "Address not found"})
+	if order.Status != "COMPLETED" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Payment not completed"})
 		return
 	}
 
-	if err := db.Db.Table("carts").
-		Select("carts.cart_id,products.product_id,products.price,carts.quantity").
-		Joins("INNER JOIN products ON carts.product_id = products.product_id").
-		Where("carts.user_id=?", userID).Scan(&cart).Error; err != nil {
-		log.WithFields(log.Fields{
-			"UserID": userID,
-		}).Error("Could not fetch cart")
-		c.JSON(http.StatusNotFound, gin.H{"error": "Could not fetch cart", "details": err.Error()})
-		return
-	}
-
-	log.Println("Fetched cart contents:%+v\n", cart)
-
-	if len(cart) == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Cart is empty"})
-		return
-
-	}
-
-	var cartLock sync.Mutex
-	cartLock.Lock()
-	defer cartLock.Unlock()
+	c.JSON(http.StatusOK, gin.H{"message": "Payment successful", "order_id": orderID})
 
 }

@@ -163,6 +163,7 @@ func ViewOrders(c *gin.Context) {
 func CancelOrders(c *gin.Context) {
 	var orders models.Order
 	var orderItems []models.OrderItem
+	var wallet models.Wallet
 
 	claims, _ := c.Get("claims")
 	customClaims, ok := claims.(*middleware.Claims)
@@ -208,6 +209,32 @@ func CancelOrders(c *gin.Context) {
 
 		if err := db.Db.Save(&product).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to update product quantity"})
+			return
+		}
+	}
+
+	if err := db.Db.Where("user_id=?", userID).First(&wallet).Error; err == nil {
+		wallet.Balance += orders.Total
+		if err := db.Db.Save(&wallet).Error; err != nil {
+			log.WithFields(log.Fields{
+				"UserID": userID,
+			}).Error("Cannot update wallet")
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error updating wallet"})
+			return
+		}
+	} else if err == gorm.ErrRecordNotFound {
+		
+		NewWallet := models.Wallet{
+			UserID: userID,
+			Balance: orders.Total,
+
+		}
+		if err:=db.Db.Create(&NewWallet).Error;err!=nil{
+			log.WithFields(log.Fields{
+				"UserID":userID,
+				"Wallet":wallet.WalletID,
+			}).Error("Cannot create wallet")
+			c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed to create wallet"})
 			return
 		}
 	}
@@ -279,3 +306,5 @@ func ForgotPassword(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Password changed successfully"})
 
 }
+
+

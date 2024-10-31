@@ -22,7 +22,7 @@ type Address struct {
 	AddressLine2 string
 	Country      string
 	City         string
-	PostalCode   uint
+	PostalCode   string
 	Landmark     string
 	DeletedAt    gorm.DeletedAt `gorm:"index"`
 }
@@ -103,15 +103,17 @@ type OrderItem struct {
 }
 
 type Coupon struct {
-	CouponID             int    `gorm:"primaryKey;autoIncrement"`
-	CouponCode           string `gorm:"unique"`
-	DiscountAmount uint
-	Description          string
-	StartDate            time.Time
-	EndDate               time.Time
-	MinPurchaseAmount    int
-	MaxPurchaseAmount    int
-	IsActive             bool 
+	CouponID          int    `gorm:"primaryKey;autoIncrement"`
+	CouponCode        string `gorm:"unique"`
+	DiscountAmount    float64
+	DiscountType      string `gorm:"not null;default:fixed"`
+	Description       string
+	StartDate         time.Time
+	EndDate           time.Time
+	MinPurchaseAmount int
+	MaxPurchaseAmount int
+
+	IsActive bool
 }
 
 type ReviewRating struct {
@@ -141,4 +143,12 @@ type OTP struct {
 	Email  string
 	Code   string
 	Expiry time.Time
+}
+
+type Wallet struct {
+	WalletID  uint    `gorm:"primaryKey"`
+	UserID    uint    `gorm:"not null;foreignKey:UserID;references:UserID"`
+	Balance   float64 `gorm:"not null;default:0.0"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
