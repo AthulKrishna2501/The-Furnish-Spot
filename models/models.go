@@ -44,17 +44,21 @@ type Category struct {
 }
 
 type Product struct {
-	ProductID   int     `gorm:"primaryKey"`
-	ProductName string  `json:"name"`
-	Description string  `json:"description"`
-	Price       float64 `json:"price"`
-	CategoryID  uint    `gorm:"not null;index;constraint:OnDelete:CASCADE" json:"category_id"`
-	ImgURL      string  `json:"img_url"`
-	Status      string  `gorm:"check(status IN('Available', 'Out of stock'))"`
-	Quantity    int     `json:"quantity" gorm:"default:0"`
-	CreatedAt   time.Time
-	DeletedAt   gorm.DeletedAt `gorm:"index"`
+	ProductID     int            `gorm:"primaryKey"`
+	ProductName   string         `json:"name"`
+	Description   string         `json:"description"`
+	Price         float64        `json:"price"`
+	CategoryID    uint           `gorm:"not null;index;constraint:OnDelete:CASCADE" json:"category_id"`
+	ImgURL        string         `json:"img_url"`
+	Status        string         `gorm:"check(status IN('Available', 'Out of stock'))" json:"status"`
+	Quantity      int            `json:"quantity" gorm:"default:0"`
+	AverageRating float64        `gorm:"-" json:"average_rating"`
+	TotalReviews  int            `gorm:"-" json:"total_reviews"`
+	RecentReviews []ReviewRating `gorm:"foreignKey:ProductID;references:ProductID" json:"recent_reviews"` // Correct reference
+	CreatedAt     time.Time
+	DeletedAt     gorm.DeletedAt `gorm:"index"`
 }
+
 type Wishlist struct {
 	WishlistID  int `gorm:"primaryKey;autoIncrement"`
 	UserID      int `gorm:"not null;index;foreignKey:UserID;references:UserID"`
@@ -112,20 +116,21 @@ type Coupon struct {
 	EndDate           time.Time
 	MinPurchaseAmount int
 	MaxPurchaseAmount int
-
-	IsActive bool
+	IsActive          bool
 }
-
 type ReviewRating struct {
-	ReviewRatingID int `gorm:"primaryKey;autoIncrement"`
-	UserID         int `gorm:"not null;foreignKey:UserID;references:UserID"`
-	ProductID      int `gorm:"not null;foreignKey:ProductID;references:ProductID"`
-	Review         string
-	Rating         int
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-}
+	ReviewRatingID int       `gorm:"primaryKey;autoIncrement" json:"review_rating_id"`
+	UserID         int       `gorm:"not null;index" json:"user_id"`    // Foreign key reference to User
+	ProductID      int       `gorm:"not null;index" json:"product_id"` // Foreign key reference to Product
+	Rating         int       `json:"rating"`
+	Comment        string    `json:"comment"` // Corrected JSON tag
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
 
+	// Relationships
+	User    User    `gorm:"foreignKey:UserID;references:ID"`           // Assuming ID is the primary key in User
+	Product Product `gorm:"foreignKey:ProductID;references:ProductID"` // Assuming ProductID is the primary key in Product
+}
 type TempUser struct {
 	UserName    string `json:"username"`
 	Address     string

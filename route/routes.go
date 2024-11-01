@@ -36,6 +36,7 @@ func RegisterURL(router *gin.Engine) {
 	router.POST("profile/addaddress", middleware.AuthMiddleware("user"), user.AddAddress)
 	router.PUT("profile/updateaddress/:id", middleware.AuthMiddleware("user"), user.EditAddress)
 	router.DELETE("/profile/deleteaddress/:id", middleware.AuthMiddleware("user"), user.DeleteAddress)
+	router.GET("/user/wallet", middleware.AuthMiddleware("user"), user.ViewWallet)
 
 	//Orders
 	router.GET("/vieworders", middleware.AuthMiddleware("user"), user.ViewOrders)
@@ -56,6 +57,11 @@ func RegisterURL(router *gin.Engine) {
 
 	//Coupons
 	router.GET("/coupons", middleware.AuthMiddleware("user"), user.ViewCoupons)
+
+	//ReivewRatings
+	router.POST("/user/review", middleware.AuthMiddleware("user"), user.AddReviews)
+	router.PUT("/user/editreview", middleware.AuthMiddleware("user"), user.EditReview)
+	router.DELETE("/user/deletereview/:id", middleware.AuthMiddleware("user"), user.DeleteReview)
 
 	//Admin
 	router.POST("/adminlogin", admin.AdminLogin)

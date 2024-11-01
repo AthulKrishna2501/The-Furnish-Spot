@@ -12,14 +12,18 @@ type User struct {
 }
 
 type Products struct {
-	ProductID   int     `gorm:"primaryKey"`
-	ProductName string  `json:"name"`
-	Description string  `json:"description"`
-	Price       float64 `json:"price"`
-	CategoryID  uint    `gorm:"not null;index;constraint:OnDelete:CASCADE" json:"category_id"`
-	ImgURL      string  `json:"img_url"`
-	Status      string  `gorm:"check(status IN('Available', 'Out of stock'))"`
-	Quantity    int     `json:"quantity"`
+	ProductID     int            `json:"product_id"` // Change to json tag to match the JSON response
+	ProductName   string         `json:"name"`
+	Description   string         `json:"description"`
+	Price         float64        `json:"price"`
+	OfferDiscount float64        `json:"offer_discount"`
+	CategoryID    uint           `json:"category_id"`
+	ImgURL        string         `json:"img_url"`
+	Status        string         `json:"status"`
+	Quantity      int            `json:"quantity"`
+	AverageRating float64        `json:"average_rating"`
+	TotalReviews  int            `json:"total_reviews"`
+	RecentReviews []ReviewRating `gorm:"foreignKey:ProductID json:recent_reviews"`
 }
 type Address struct {
 	AddressID    int    `gorm:"primaryKey;autoIncrement"`
@@ -57,4 +61,12 @@ type Wishlist struct {
 	ProductName string `json:"product_name"`
 	Price       int    `json:"price"`
 	Quantity    int    `json:"quantity"`
+}
+
+type ReviewRating struct {
+	ReviewID  int       `json:"review_id"` // Use int to match with ReviewRatingID
+	UserID    int       `json:"user_id"`   // This should be an int representing the UserID
+	Rating    int       `json:"rating"`
+	Comment   string    `json:"comment"`
+	CreatedAt time.Time `json:"created_at"`
 }

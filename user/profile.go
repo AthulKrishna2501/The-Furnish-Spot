@@ -213,32 +213,33 @@ func CancelOrders(c *gin.Context) {
 		}
 	}
 
-	if err := db.Db.Where("user_id=?", userID).First(&wallet).Error; err == nil {
-		wallet.Balance += orders.Total
-		if err := db.Db.Save(&wallet).Error; err != nil {
-			log.WithFields(log.Fields{
-				"UserID": userID,
-			}).Error("Cannot update wallet")
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error updating wallet"})
-			return
-		}
-	} else if err == gorm.ErrRecordNotFound {
-		
-		NewWallet := models.Wallet{
-			UserID: userID,
-			Balance: orders.Total,
+	if orders.Method == "Paypal" {
 
-		}
-		if err:=db.Db.Create(&NewWallet).Error;err!=nil{
-			log.WithFields(log.Fields{
-				"UserID":userID,
-				"Wallet":wallet.WalletID,
-			}).Error("Cannot create wallet")
-			c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed to create wallet"})
-			return
+		if err := db.Db.Where("user_id=?", userID).First(&wallet).Error; err == nil {
+			wallet.Balance += orders.Total
+			if err := db.Db.Save(&wallet).Error; err != nil {
+				log.WithFields(log.Fields{
+					"UserID": userID,
+				}).Error("Cannot update wallet")
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Error updating wallet"})
+				return
+			}
+		} else if err == gorm.ErrRecordNotFound {
+
+			NewWallet := models.Wallet{
+				UserID:  userID,
+				Balance: orders.Total,
+			}
+			if err := db.Db.Create(&NewWallet).Error; err != nil {
+				log.WithFields(log.Fields{
+					"UserID": userID,
+					"Wallet": wallet.WalletID,
+				}).Error("Cannot create wallet")
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create wallet"})
+				return
+			}
 		}
 	}
-
 	orders.Status = "Canceled"
 	if err := db.Db.Save(&orders).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to save order status"})
@@ -307,4 +308,21 @@ func ForgotPassword(c *gin.Context) {
 
 }
 
+func ViewWallet(c *gin.Context) {
+	var wallet models.Wallet
 
+	claims, _ := middleware.GetClaims(c)
+
+	userID := claims.ID
+
+	if err := db.Db.Where("user_id", userID).First(&wallet).Error; err != nil {
+		log.WithFields(log.Fields{
+			"UserID":   userID,
+			"WalletID": wallet.WalletID,
+		}).Error("Cannot find wallet")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Cannot find wallet"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"Wallet retrived successfully": wallet})
+}
