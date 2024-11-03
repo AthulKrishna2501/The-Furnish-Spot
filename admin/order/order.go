@@ -21,7 +21,6 @@ func ListOrders(c *gin.Context) {
 	var orderResponses []responsemodels.OrderResponse
 
 	for _, order := range orders {
-		fmt.Printf("Order ID: %d, Status: %s\n", order.OrderID, order.Status)
 
 		var totalQuantity int
 		var orderItems []models.OrderItem
@@ -67,11 +66,6 @@ func ChangeOrderStatus(c *gin.Context) {
 		return
 	}
 
-	if order.Status == "Delivered" || order.Status == "Shipped" || order.Status == "Failed" || order.Status == "Canceled" {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid status"})
-		return
-	}
-
 	if input.Status == "Canceled" && order.Status != "Canceled" {
 		var product models.Product
 		var item models.OrderItem
@@ -82,6 +76,14 @@ func ChangeOrderStatus(c *gin.Context) {
 				return
 			}
 		}
+	} else {
+		if order.Status == "Canceled" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Order is already canceled"})
+			return
+		} else if order.Status == "Delivered" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot cancel a delivered order"})
+			return
+		} 
 	}
 
 	order.Status = input.Status

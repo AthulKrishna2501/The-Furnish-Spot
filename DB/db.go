@@ -36,6 +36,7 @@ func InitDatabase() {
 		&models.Wallet{},
 		// &models.Product{},
 		// &models.ReviewRating{},
+		&models.Offer{},
 	)
 	if Autoerr != nil {
 		log.Fatalf("Migration failed: %v", err)

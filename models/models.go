@@ -88,7 +88,7 @@ type Order struct {
 	CouponID      int         `gorm:"index"`
 	Discount      int         `gorm:"default:0"`
 	Quantity      int         `gorm:"default:0"`
-	Status        string      `gorm:"check(status IN('Pending', 'Shipped', 'Delivered', 'Canceled','Failed'))"`
+	Status        string      `gorm:"check(status IN('Pending', 'Shipped', 'Delivered', 'Canceled','Failed','Returned'))"`
 	Method        string      `gorm:"check(method IN('Credit Card', 'PayPal', 'Bank Transfer'))"`
 	PaymentStatus string      `gorm:"check(payment_status IN('Processing', 'Success', 'Failed'))"`
 	CreatedAt     time.Time   `gorm:"autoCreateTime"`
@@ -108,7 +108,7 @@ type OrderItem struct {
 
 type Coupon struct {
 	CouponID          int    `gorm:"primaryKey;autoIncrement"`
-	CouponCode        string `gorm:"unique"`
+	CouponCode        string `gorm:"unique" json:"coupon_code"`
 	DiscountAmount    float64
 	DiscountType      string `gorm:"not null;default:fixed"`
 	Description       string
@@ -117,6 +117,7 @@ type Coupon struct {
 	MinPurchaseAmount int
 	MaxPurchaseAmount int
 	IsActive          bool
+	DeletedAt         gorm.DeletedAt
 }
 type ReviewRating struct {
 	ReviewRatingID int       `gorm:"primaryKey;autoIncrement" json:"review_rating_id"`
@@ -156,4 +157,18 @@ type Wallet struct {
 	Balance   float64 `gorm:"not null;default:0.0"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
+}
+
+type Offer struct {
+	gorm.Model
+	ProductID          int `gorm:"not null"`
+	OfferPercentage int `gorm:"not null"`
+}
+
+type SalesReport struct {
+	DateRange         string  `json:"date_range"`
+	TotalSalesCount   int     `json:"total_sales_count"`
+	TotalOrderAmount  float64 `json:"total_order_amount"`
+	TotalDiscount     float64 `json:"total_discount"`
+	CouponsDeduction   float64 `json:"coupons_deduction"`
 }

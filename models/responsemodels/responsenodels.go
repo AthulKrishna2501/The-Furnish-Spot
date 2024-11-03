@@ -35,12 +35,10 @@ type Address struct {
 	Landmark     string `json:"landmark"`
 }
 type CartResponse struct {
-	UserID    int    `json:"user_id"`
-	ProductID int    `json:"product_id"`
-	Quantity  int    `json:"quantity"`
-	Total     int    `json:"total"`
-	UserName  string `json:"user_name"`
-	Email     string `json:"email"`
+	UserID    int `json:"user_id"`
+	ProductID int `json:"product_id"`
+	Quantity  int `json:"quantity"`
+	Total     int `json:"total"`
 }
 
 type OrderResponse struct {
@@ -69,4 +67,11 @@ type ReviewRating struct {
 	Rating    int       `json:"rating"`
 	Comment   string    `json:"comment"`
 	CreatedAt time.Time `json:"created_at"`
+}
+
+type Offer struct {
+	ProductID   int     `json:"product_id"`
+	OfferPercentage int `json:"offer_percentage"`
+	CreateAt    time.Time
+	UpdatedAt   time.Time
 }

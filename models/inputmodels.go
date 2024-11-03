@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type SignupInput struct {
 	UserName    string `json:"username" validate:"required,min=3,max=16,alphanum"`
 	Email       string `json:"email" validate:"required,email"`
@@ -59,4 +61,26 @@ type ReviewInput struct {
 	ProductID int    `json:"product_id"`
 	Rating    int    `json:"rating"`
 	Comment   string `json:"comment"`
+}
+
+type CouponInput struct {
+	CouponCode        string    `json:"coupon_code"`
+	DiscountAmount    float64   `json:"discount_amount"`
+	DiscountType      string    `json:"discount_type"`
+	Description       string    `json:"description"`
+	StartDate         time.Time `json:"start_date"`
+	EndDate           time.Time `json:"end_date"`
+	MinPurchaseAmount int       `json:"min_purchase_amount"`
+	MaxPurchaseAmount int       `json:"max_purchase_amount"`
+	IsActive          bool      `json:"is_active"`
+}
+
+type ReturnOrder struct {
+	OrderID int    `json:"order_id"`
+	Reason  string `json:"reason"`
+}
+
+type OfferInput struct {
+	ProductID   int `json:"product_id"`
+	OfferPercentage int `json:"offer_percentage"`
 }

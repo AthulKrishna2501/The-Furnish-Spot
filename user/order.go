@@ -1,19 +1,15 @@
 package user
 
 import (
-	"fmt"
-	"log"
-	"math"
 	"net/http"
-	"sync"
 	"time"
 
 	db "github.com/AthulKrishna2501/The-Furniture-Spot/DB"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/middleware"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/models"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/models/responsemodels"
-	"github.com/AthulKrishna2501/The-Furniture-Spot/util"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 func Orders(c *gin.Context) {
@@ -22,7 +18,6 @@ func Orders(c *gin.Context) {
 	var order models.Order
 	var coupon models.Coupon
 	var cart []models.Cart
-
 
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Input"})
@@ -51,17 +46,16 @@ func Orders(c *gin.Context) {
 		return
 	}
 
-	var cartLock sync.Mutex
-	cartLock.Lock()
-	defer cartLock.Unlock()
-
 	var totalAmount float64
 	var totalQuantity int
 	var orderItems []models.OrderItem
 
+	var totalDiscount float64
+
 	for _, item := range cart {
 		productID := item.ProductID
 		product := models.Product{}
+
 		if err := db.Db.First(&product, productID).Error; err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Product not found", "product_id": productID})
 			return
@@ -73,6 +67,15 @@ func Orders(c *gin.Context) {
 		}
 
 		itemPrice := float64(item.Quantity) * product.Price
+
+		var offer models.Offer
+		var itemDiscount float64
+		if err := db.Db.Where("product_id = ?", productID).First(&offer).Error; err == nil {
+			itemDiscount = (float64(offer.OfferPercentage) / 100) * itemPrice
+			itemPrice -= itemDiscount
+		}
+
+		totalDiscount += itemDiscount
 		totalAmount += itemPrice
 		totalQuantity += item.Quantity
 
@@ -89,77 +92,40 @@ func Orders(c *gin.Context) {
 			return
 		}
 	}
-	var discount float64
+
+	var couponDiscount float64
 	if input.CouponCode != "" {
-		if err := db.Db.Where("coupon_code = ? AND is_active = ?", input.CouponCode, true).First(&coupon).Error; err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Invalid or expired coupon"})
-			return
+		if err := db.Db.Where("coupon_code = ? AND is_active = ?", input.CouponCode, true).First(&coupon).Error; err == nil {
+			if totalAmount >= float64(coupon.MinPurchaseAmount) {
+				if coupon.DiscountType == "percentage" {
+					couponDiscount = (coupon.DiscountAmount / 100) * totalAmount
+				} else {
+					couponDiscount = coupon.DiscountAmount
+				}
+				totalAmount -= couponDiscount
+			}
 		}
-
-		if totalAmount < float64(coupon.MinPurchaseAmount) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Order total does not meet coupon's minimum value requirement"})
-			return
-		}
-
-		if coupon.DiscountType == "percentage" {
-			discount = (coupon.DiscountAmount / 100) * totalAmount
-		} else {
-			discount = coupon.DiscountAmount
-		}
-		totalAmount -= discount
 	}
-
-	if input.Method == "Paypal" {
-		Total, err := util.ConvertINRtoUSD(totalAmount)
-		if err != nil {
-			log.Printf("Could not convert INR to USD: %v\n", err)
-		}
-		RoundedTotal := math.Round(Total*100) / 100
-
-		client, err := NewPayPalClient()
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize PayPal client"})
-			return
-		}
-
-		approvalURL, err := CreatePayPalPayment(client, RoundedTotal)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create PayPal order"})
-			return
-		}
-
-		c.JSON(http.StatusOK, gin.H{"approval_url": approvalURL})
-		order.PaymentStatus = "Processing"
-
-	} else if input.Method == "COD" {
-		order.PaymentStatus = "Pending"
-
-	} else {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid payment method"})
-		return
-	}
+	totalDiscount += couponDiscount
 
 	orders := models.Order{
 		UserID:        int(userID),
-		Total:         totalAmount,
-		Quantity:      totalQuantity,
-		Discount:      int(discount),
 		CouponID:      coupon.CouponID,
-		OrderDate:     time.Now(),
+		Quantity:      totalQuantity,
+		Discount:      int(totalDiscount),
+		Total:         totalAmount,
 		Status:        "Pending",
 		Method:        input.Method,
 		PaymentStatus: order.PaymentStatus,
+		OrderDate:     time.Now(),
 	}
-	fmt.Println(orders)
 
 	if err := db.Db.Create(&orders).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not place order", "details": err.Error()})
 		return
 	}
-
 	for _, item := range orderItems {
 		item.OrderID = orders.OrderID
-
 		if err := db.Db.Create(&item).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not save order items", "details": err.Error()})
 			return
@@ -175,15 +141,47 @@ func Orders(c *gin.Context) {
 		UserID:         int(userID),
 		OrderID:        orders.OrderID,
 		Quantity:       totalQuantity,
-		DiscountAmount: discount,
+		DiscountAmount: totalDiscount,
 		Total:          totalAmount,
 		Status:         orders.Status,
 		Method:         orders.Method,
 		PaymentStatus:  order.PaymentStatus,
 		OrderDate:      orders.OrderDate,
 	}
-	fmt.Println(orderResponse)
 
 	c.JSON(http.StatusOK, gin.H{"message": "Order placed successfully", "order": orderResponse})
 
+}
+
+func ReturnOrder(c *gin.Context) {
+	var order models.Order
+	var input models.ReturnOrder
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := db.Db.Where("order_id =?", input.OrderID).First(&order).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Order not found"})
+		return
+	}
+
+	if input.Reason == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Please give a reason"})
+		return
+	}
+	if order.Status != "Delivered" || order.Status == "Returned" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Cannot return order"})
+		return
+	}
+	order.Status = "Returned"
+
+	db.Db.Save(&order)
+
+	for _, item := range order.OrderItems {
+		db.Db.Model(&models.Product{}).Where("product_id = ?", item.ProductID).Update("quantity", gorm.Expr("quantity + ?", item.Quantity))
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Order returned successfully"})
 }

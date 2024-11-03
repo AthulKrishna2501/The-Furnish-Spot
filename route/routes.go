@@ -4,8 +4,11 @@ import (
 	"github.com/AthulKrishna2501/The-Furniture-Spot/admin"
 	adminuser "github.com/AthulKrishna2501/The-Furniture-Spot/admin/adminUser"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/admin/category"
+	"github.com/AthulKrishna2501/The-Furniture-Spot/admin/coupon"
+	"github.com/AthulKrishna2501/The-Furniture-Spot/admin/offer"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/admin/order"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/admin/product"
+	salesreport "github.com/AthulKrishna2501/The-Furniture-Spot/admin/salesReport"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/captcha"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/middleware"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/user"
@@ -43,7 +46,7 @@ func RegisterURL(router *gin.Engine) {
 	router.DELETE("/orders/:id/delete", middleware.AuthMiddleware("user"), user.CancelOrders)
 	router.POST("/users/order", middleware.AuthMiddleware("user"), user.Orders)
 	router.GET("/paypal/confirmpayment", user.CapturePayPalOrder)
-
+	router.POST("/user/returnorder", middleware.AuthMiddleware("user"), user.ReturnOrder)
 	//Cart
 	router.GET("/user/cart", middleware.AuthMiddleware("user"), user.Cart)
 	router.POST("/user/addtocart", middleware.AuthMiddleware("user"), user.AddToCart)
@@ -82,5 +85,15 @@ func RegisterURL(router *gin.Engine) {
 
 	router.GET("/admin/listorders", middleware.AuthMiddleware("admin"), order.ListOrders)
 	router.PUT("/admin/changeorderstatus/:id", middleware.AuthMiddleware("admin"), order.ChangeOrderStatus)
+
+	router.GET("/admin/viewcoupons", middleware.AuthMiddleware("admin"), coupon.ViewCoupons)
+	router.POST("/admin/addcoupon", middleware.AuthMiddleware("admin"), coupon.AddCoupon)
+	router.DELETE("/admin/deletecoupon/:id", middleware.AuthMiddleware("admin"), coupon.DeleteCoupon)
+
+	router.GET("/admin/viewoffers", middleware.AuthMiddleware("admin"), offer.ViewOffers)
+	router.POST("/admin/addoffer", middleware.AuthMiddleware("admin"), offer.AddOffer)
+	router.PUT("/admin/updateoffer", middleware.AuthMiddleware("admin"), offer.UpdateOffer)
+
+	router.GET("/generate-report", salesreport.GenerateReport)
 
 }

@@ -30,7 +30,7 @@ func Cart(c *gin.Context) {
 	var cartItems []responsemodels.CartResponse
 
 	if err := db.Db.Table("carts").
-		Select("carts.user_id, carts.product_id, carts.quantity, carts.total, users.user_name, users.email").
+		Select("carts.user_id, carts.product_id, carts.quantity, carts.total").
 		Joins("join users on users.id = carts.user_id").
 		Where("carts.user_id = ?", userID).
 		Scan(&cartItems).Error; err != nil {
@@ -83,7 +83,6 @@ func AddToCart(c *gin.Context) {
 	if err := db.Db.Where("user_id = ? AND product_id = ?", userID, item.ProductID).First(&cartItem).Error; err == nil {
 		cartItem.Quantity += item.Quantity
 		cartItem.Total = cartItem.Quantity * int(product.Price)
-		product.Quantity -= item.Quantity
 		if err := db.Db.Save(&cartItem).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error updating cart item"})
 			return
@@ -105,11 +104,10 @@ func AddToCart(c *gin.Context) {
 			return
 		}
 
-		product.Quantity -= item.Quantity
 		db.Db.Save(&product)
 
 		c.JSON(http.StatusCreated, gin.H{"message": "Item added to cart"})
-		product.Quantity -= item.Quantity
+
 		return
 	} else {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
