@@ -1,6 +1,9 @@
 package user
 
 import (
+	"fmt"
+	"log"
+	"math"
 	"net/http"
 	"time"
 
@@ -8,6 +11,7 @@ import (
 	"github.com/AthulKrishna2501/The-Furniture-Spot/middleware"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/models"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/models/responsemodels"
+	"github.com/AthulKrishna2501/The-Furniture-Spot/util"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -103,10 +107,43 @@ func Orders(c *gin.Context) {
 					couponDiscount = coupon.DiscountAmount
 				}
 				totalAmount -= couponDiscount
+			} else {
+				fmt.Println("Minimum purchase amount for coupon not met.")
+				c.JSON(http.StatusBadRequest, gin.H{"message": "Minimum purchase amount for coupon not met."})
+				return
 			}
+		} else {
+
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid Coupon"})
+			return
 		}
 	}
 	totalDiscount += couponDiscount
+
+	if input.Method == "Paypal" {
+		Total, err := util.ConvertINRtoUSD(totalAmount)
+		if err != nil {
+			log.Printf("Could not convert INR to USD: %v\n", err)
+		}
+		RoundedTotal := math.Round(Total*100) / 100
+		client, err := NewPayPalClient()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize PayPal client"})
+			return
+		}
+		approvalURL, err := CreatePayPalPayment(client, RoundedTotal)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create PayPal order"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"approval_url": approvalURL})
+		order.PaymentStatus = "Processing"
+	} else if input.Method == "COD" {
+		order.PaymentStatus = "Pending"
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid payment method"})
+		return
+	}
 
 	orders := models.Order{
 		UserID:        int(userID),

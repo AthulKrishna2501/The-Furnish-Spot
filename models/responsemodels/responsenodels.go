@@ -70,8 +70,8 @@ type ReviewRating struct {
 }
 
 type Offer struct {
-	ProductID   int     `json:"product_id"`
+	ProductID       int `json:"product_id"`
 	OfferPercentage int `json:"offer_percentage"`
-	CreateAt    time.Time
-	UpdatedAt   time.Time
+	CreateAt        time.Time
+	UpdatedAt       time.Time
 }

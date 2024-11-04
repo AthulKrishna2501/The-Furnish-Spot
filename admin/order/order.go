@@ -11,9 +11,36 @@ import (
 )
 
 func ListOrders(c *gin.Context) {
-	var orders []models.Order
+	status := c.Query("status")
+	sort := c.Query("sort")
+	order := c.Query("order")
+	startDate := c.Query("startDate")
+	endDate := c.Query("endDate")
 
-	if err := db.Db.Find(&orders).Error; err != nil {
+	var orders []models.Order
+	db := db.Db.Model(&models.Order{})
+
+	if status != "" {
+		db = db.Where("status = ?", status)
+	}
+
+	if startDate != "" && endDate != "" {
+		db = db.Where("order_date BETWEEN ? AND ?", startDate, endDate)
+	}
+
+	switch sort {
+	case "order_date":
+		db = db.Order("order_date " + order)
+	case "total":
+		db = db.Order("total " + order)
+	default:
+		if sort != "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid sort parameter"})
+			return
+		}
+	}
+
+	if err := db.Find(&orders).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Cannot fetch orders"})
 		return
 	}
@@ -21,10 +48,12 @@ func ListOrders(c *gin.Context) {
 	var orderResponses []responsemodels.OrderResponse
 
 	for _, order := range orders {
-
+		if order.Status == "Delivered" {
+			order.PaymentStatus = "Paid"
+		}
 		var totalQuantity int
 		var orderItems []models.OrderItem
-		if err := db.Db.Where("order_id = ?", order.OrderID).Find(&orderItems).Error; err == nil {
+		if err := db.Where("order_id = ?", order.OrderID).Find(&orderItems).Error; err == nil {
 			for _, item := range orderItems {
 				totalQuantity += item.Quantity
 			}
@@ -83,7 +112,7 @@ func ChangeOrderStatus(c *gin.Context) {
 		} else if order.Status == "Delivered" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot cancel a delivered order"})
 			return
-		} 
+		}
 	}
 
 	order.Status = input.Status

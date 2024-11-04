@@ -12,10 +12,14 @@ func SearchProducts(c *gin.Context) {
 	query := c.Query("query")
 	sort := c.Query("sort")
 	order := c.Query("order")
+	categoryID := c.Query("categoryID") 
 
 	var products []models.Product
-
 	db := db.Db.Model(&models.Product{}).Where("product_name ILIKE ?", "%"+query+"%")
+
+	if categoryID != "" {
+		db = db.Where("category_id = ?", categoryID)
+	}
 
 	switch sort {
 	case "popularity":
