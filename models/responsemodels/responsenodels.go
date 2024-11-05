@@ -35,7 +35,6 @@ type Address struct {
 	Landmark     string `json:"landmark"`
 }
 type CartResponse struct {
-	UserID    int `json:"user_id"`
 	ProductID int `json:"product_id"`
 	Quantity  int `json:"quantity"`
 	Total     int `json:"total"`
@@ -54,7 +53,6 @@ type OrderResponse struct {
 }
 
 type Wishlist struct {
-	UserID      int    `json:"user_id"`
 	ProductID   int    `json:"product_id"`
 	ProductName string `json:"product_name"`
 	Price       int    `json:"price"`

@@ -1,6 +1,7 @@
 package user
 
 import (
+	"fmt"
 	"net/http"
 
 	db "github.com/AthulKrishna2501/The-Furniture-Spot/DB"
@@ -30,7 +31,10 @@ func ViewWhishlist(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"Whislist retrived successfully": whishlists})
+	c.JSON(http.StatusOK, gin.H{
+		"message":  fmt.Sprintf("Wishlist retrieved successfully for UserID %d", userID),
+		"Wishlist": whishlists,
+	})
 }
 
 func AddToWhishlist(c *gin.Context) {
@@ -141,7 +145,6 @@ func ClearWishlist(c *gin.Context) {
 
 	claims, _ := middleware.GetClaims(c)
 	userID := claims.ID
-
 
 	if err := db.Db.Where("user_id=?", userID).Find(&whishlist).Error; err != nil {
 		log.WithFields(log.Fields{

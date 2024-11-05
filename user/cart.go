@@ -1,6 +1,7 @@
 package user
 
 import (
+	"fmt"
 	"net/http"
 	"sync"
 
@@ -30,7 +31,7 @@ func Cart(c *gin.Context) {
 	var cartItems []responsemodels.CartResponse
 
 	if err := db.Db.Table("carts").
-		Select("carts.user_id, carts.product_id, carts.quantity, carts.total").
+		Select("carts.product_id, carts.quantity, carts.total").
 		Joins("join users on users.id = carts.user_id").
 		Where("carts.user_id = ?", userID).
 		Scan(&cartItems).Error; err != nil {
@@ -41,7 +42,10 @@ func Cart(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "Cart is empty"})
 		return
 	}
-	c.JSON(http.StatusOK, cartItems)
+	c.JSON(http.StatusOK, gin.H{
+		"message":   fmt.Sprintf("Cart retrieved successfully for UserID %d", userID),
+		"Cart": cartItems,
+	})
 }
 
 func AddToCart(c *gin.Context) {

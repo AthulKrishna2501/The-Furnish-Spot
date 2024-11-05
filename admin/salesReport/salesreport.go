@@ -18,7 +18,7 @@ func GenerateReport(c *gin.Context) {
 	filter := c.Query("filter")
 	startDate := c.Query("start_date")
 	endDate := c.Query("end_date")
-	format := c.Query("format") 
+	format := c.Query("format")
 	query := db.Db.Model(&models.Order{})
 
 	if filter == "daily" {
@@ -75,13 +75,13 @@ func GeneratePDFReport(report models.SalesReport) (string, error) {
 	pdf.AddPage()
 
 	pdf.Cell(nil, "Sales Report")
-	pdf.Br(20)
+	pdf.Br(30)
 	pdf.Cell(nil, "Total Sales Count: "+fmt.Sprintf("%d", report.TotalSalesCount))
-	pdf.Br(10)
+	pdf.Br(15)
 	pdf.Cell(nil, "Total Order Amount: "+fmt.Sprintf("%.2f", report.TotalOrderAmount))
-	pdf.Br(10)
+	pdf.Br(15)
 	pdf.Cell(nil, "Total Discount: "+fmt.Sprintf("%.2f", report.TotalDiscount))
-	pdf.Br(10)
+	pdf.Br(15)
 	pdf.Cell(nil, "Coupons Deduction: "+fmt.Sprintf("%.2f", report.CouponsDeduction))
 
 	err = pdf.WritePdf("sales_report.pdf")

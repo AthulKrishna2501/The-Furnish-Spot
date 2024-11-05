@@ -34,8 +34,6 @@ func InitDatabase() {
 		&models.TempUser{},
 		&models.Wishlist{},
 		&models.Wallet{},
-		// &models.Product{},
-		// &models.ReviewRating{},
 		&models.Offer{},
 	)
 	if Autoerr != nil {
