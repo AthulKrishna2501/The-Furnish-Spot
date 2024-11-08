@@ -4,10 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 
-	"github.com/gin-gonic/gin"
 	"github.com/plutov/paypal/v4"
 )
 
@@ -20,7 +18,7 @@ func NewPayPalClient() (*paypal.Client, error) {
 	return client, nil
 }
 
-func CreatePayPalPayment(client *paypal.Client, amount float64) (string, error) {
+func CreatePayPalPayment(client *paypal.Client, amount float64) (string, string, error) {
 	purchaseUnit := paypal.PurchaseUnitRequest{
 		Amount: &paypal.PurchaseUnitAmount{
 			Currency: "USD",
@@ -40,44 +38,20 @@ func CreatePayPalPayment(client *paypal.Client, amount float64) (string, error) 
 		&applicationContext,
 	)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
+	var approvalURL string
 	for _, link := range order.Links {
 		if link.Rel == "approve" {
-			return link.Href, nil
+			approvalURL = link.Href
+			break
 		}
 	}
 
-	return "", fmt.Errorf("no approval link found in PayPal response")
-}
-
-func CapturePayPalOrder(c *gin.Context) {
-	client, err := NewPayPalClient()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize PayPal client"})
-		return
+	if approvalURL == "" {
+		return "", "", fmt.Errorf("no approval link found in PayPal response")
 	}
 
-	orderID := c.Query("token")
-	if orderID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Order ID missing from query parameters"})
-		return
-	}
-	captureRequest := paypal.CaptureOrderRequest{}
-
-	order, err := client.CaptureOrder(context.Background(), orderID, captureRequest)
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to capture PayPal order", "details": err.Error()})
-		return
-	}
-
-	if order.Status != "COMPLETED" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Payment not completed"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Payment successful", "order_id": orderID})
-
+	return approvalURL, order.ID, nil
 }

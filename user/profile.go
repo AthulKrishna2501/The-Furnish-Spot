@@ -38,7 +38,7 @@ func UserProfile(c *gin.Context) {
 	}
 
 	if user.Status == "" {
-		user.Status = "Available"
+		user.Status = "Active"
 	}
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})

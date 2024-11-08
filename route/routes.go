@@ -46,6 +46,7 @@ func RegisterURL(router *gin.Engine) {
 	router.DELETE("/orders/:id/delete", middleware.AuthMiddleware("user"), user.CancelOrders)
 	router.POST("/users/order", middleware.AuthMiddleware("user"), user.Orders)
 	router.GET("/paypal/confirmpayment", user.CapturePayPalOrder)
+	router.GET("/paypal/cancel-payment", user.CapturePayPalOrder)
 	router.POST("/user/returnorder", middleware.AuthMiddleware("user"), user.ReturnOrder)
 	//Cart
 	router.GET("/user/cart", middleware.AuthMiddleware("user"), user.Cart)

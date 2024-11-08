@@ -82,7 +82,7 @@ type Cart struct {
 type Order struct {
 	OrderID       int `gorm:"primaryKey;autoIncrement"`
 	UserID        int `gorm:"not null;index"`
-	PaymentID     int
+	PaymentID     string
 	OrderDate     time.Time   `gorm:"type:timestamp;default:CURRENT_TIMESTAMP"`
 	Total         float64     `gorm:"not null"`
 	CouponID      int         `gorm:"index"`
@@ -161,14 +161,29 @@ type Wallet struct {
 
 type Offer struct {
 	gorm.Model
-	ProductID          int `gorm:"not null"`
+	ProductID       int `gorm:"not null"`
 	OfferPercentage int `gorm:"not null"`
 }
 
 type SalesReport struct {
-	DateRange         string  `json:"date_range"`
-	TotalSalesCount   int     `json:"total_sales_count"`
-	TotalOrderAmount  float64 `json:"total_order_amount"`
-	TotalDiscount     float64 `json:"total_discount"`
-	CouponsDeduction   float64 `json:"coupons_deduction"`
+	DateRange        string  `json:"date_range"`
+	TotalSalesCount  int     `json:"total_sales_count"`
+	TotalOrderAmount float64 `json:"total_order_amount"`
+	TotalDiscount    float64 `json:"total_discount"`
+	CouponsDeduction float64 `json:"coupons_deduction"`
+}
+type TempOrder struct {
+	OrderID       string    `gorm:"primaryKey;type:varchar(255);not null"`
+	UserID        int       `gorm:"column:user_id"`
+	PaymentID     int       `gorm:"column:payment_id"`
+	OrderDate     time.Time `gorm:"column:order_date"`
+	Total         float64   `gorm:"column:total"`
+	CouponID      int       `gorm:"column:coupon_id"`
+	Discount      int       `gorm:"column:discount"`
+	Quantity      int       `gorm:"column:quantity"`
+	Status        string    `gorm:"column:status"`
+	Method        string    `gorm:"column:method"`
+	PaymentStatus string    `gorm:"column:payment_status"`
+	CreatedAt     time.Time `gorm:"column:created_at"`
+	UpdatedAt     time.Time `gorm:"column:updated_at"`
 }
