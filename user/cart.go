@@ -91,8 +91,6 @@ func AddToCart(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error updating cart item"})
 			return
 		}
-		product.Quantity -= item.Quantity
-		db.Db.Save(&product)
 
 		c.JSON(http.StatusOK, gin.H{"message": "Item quantity updated"})
 		return
@@ -108,9 +106,7 @@ func AddToCart(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error adding item to cart"})
 			return
 		}
-		product.Quantity -= item.Quantity
 
-		db.Db.Save(&product)
 
 		c.JSON(http.StatusCreated, gin.H{"message": "Item added to cart"})
 

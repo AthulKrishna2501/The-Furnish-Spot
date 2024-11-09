@@ -162,6 +162,7 @@ func Orders(c *gin.Context) {
 		return
 
 	case "COD":
+
 		order, err := createOrder(userID, input, orderItems, totalAmount, totalQuantity, totalDiscount, coupon)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -224,6 +225,9 @@ func ReturnOrder(c *gin.Context) {
 func createOrder(userID uint, input models.OrderInput, orderItems []models.OrderItem, totalAmount float64,
 	totalQuantity int, totalDiscount float64, coupon models.Coupon) (*models.Order, error) {
 
+	if totalAmount > 1000 {
+		return nil, fmt.Errorf("COD not allowed over Rupees 1000")
+	}
 	order := models.Order{
 		UserID:        int(userID),
 		CouponID:      coupon.CouponID,
@@ -235,6 +239,7 @@ func createOrder(userID uint, input models.OrderInput, orderItems []models.Order
 		PaymentStatus: "Pending",
 		OrderDate:     time.Now(),
 	}
+	fmt.Println(order)
 
 	if input.Method == "COD" {
 		order.PaymentStatus = "Pending"

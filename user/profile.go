@@ -362,7 +362,6 @@ func GetWalletTransactions(c *gin.Context) {
 			Amount:          transaction.Amount,
 			TransactionType: transaction.TransactionType,
 			Description:     transaction.Description,
-			CreatedAt:       transaction.CreatedAt,
 		}
 		ResTransactions = append(ResTransactions, ResTransaction)
 	}
