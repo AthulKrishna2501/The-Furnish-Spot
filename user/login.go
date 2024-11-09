@@ -26,7 +26,7 @@ func Login(c *gin.Context) {
 	}
 
 	if user.Status == "Blocked" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User is blocked"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User has been blocked by the Admin"})
 		return
 	}
 

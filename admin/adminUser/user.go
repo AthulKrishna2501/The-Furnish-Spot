@@ -31,6 +31,7 @@ func BlockUser(c *gin.Context) {
 
 	if user.Status == "Blocked" {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "User aldready blocked"})
+		return
 	}
 	user.Status = "Blocked"
 	if err := db.Db.Save(&user).Error; err != nil {
@@ -49,11 +50,11 @@ func UnblockUser(c *gin.Context) {
 		return
 	}
 
-	if user.Status == "Active" {
+	if user.Status == "Available" {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "User aldready active"})
 		return
 	}
-	user.Status = "Active"
+	user.Status = "Available"
 	if err := db.Db.Save(&user).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not save user"})
 		return
