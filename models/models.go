@@ -187,3 +187,32 @@ type TempOrder struct {
 	CreatedAt     time.Time `gorm:"column:created_at"`
 	UpdatedAt     time.Time `gorm:"column:updated_at"`
 }
+
+type Invoice struct {
+	InvoiceID      string        `json:"invoice_id"`
+	Date           time.Time     `json:"date"`
+	UserID         int           `json:"user_id"`
+	BillingAddress string        `json:"billing_address"`
+	Items          []InvoiceItem `json:"items"`
+	Subtotal       float64       `json:"subtotal"`
+	Tax            float64       `json:"tax"`
+	Discount       int           `json:"discount"`
+	Total          float64       `json:"total"`
+}
+
+type InvoiceItem struct {
+	Description string  `json:"description"`
+	Quantity    int     `json:"quantity"`
+	UnitPrice   float64 `json:"unit_price"`
+	TotalPrice  float64 `json:"total_price"`
+}
+
+type WalletTransaction struct {
+	ID              uint      `gorm:"primaryKey"`
+	UserID          uint      `gorm:"not null"`
+	OrderID         uint      `gorm:"default:null"`
+	Amount          float64   `gorm:"not null"`
+	TransactionType string    `gorm:"type:varchar(10);not null"`
+	Description     string    `gorm:"type:varchar(255)"`
+	CreatedAt       time.Time `gorm:"autoCreateTime"`
+}

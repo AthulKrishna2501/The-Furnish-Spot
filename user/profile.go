@@ -224,6 +224,22 @@ func CancelOrders(c *gin.Context) {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Error updating wallet"})
 				return
 			}
+			walletTransaction := models.WalletTransaction{
+				UserID:          userID,
+				OrderID:         uint(orders.OrderID),
+				Amount:          orders.Total,
+				TransactionType: "Credit",
+				Description:     "Refund for Order #" + strconv.Itoa(int(orders.OrderID)),
+			}
+			if err := db.Db.Create(&walletTransaction).Error; err != nil {
+				log.WithFields(log.Fields{
+					"UserID":  userID,
+					"OrderID": orders.OrderID,
+				}).Error("Cannot create transcation")
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Cannot create Transaction"})
+				return
+			}
+
 		} else if err == gorm.ErrRecordNotFound {
 
 			NewWallet := models.Wallet{
@@ -325,4 +341,34 @@ func ViewWallet(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"Wallet retrived successfully": wallet})
+}
+
+func GetWalletTransactions(c *gin.Context) {
+	claims, _ := middleware.GetClaims(c)
+	userID := claims.ID
+
+	var transactions []models.WalletTransaction
+
+	if err := db.Db.Where("user_id = ?", userID).Order("created_at desc").Find(&transactions).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error retrieving transactions"})
+		return
+	}
+
+	var ResTransactions []responsemodels.Transaction
+
+	for _, transaction := range transactions {
+		ResTransaction := responsemodels.Transaction{
+			OrderID:         transaction.OrderID,
+			Amount:          transaction.Amount,
+			TransactionType: transaction.TransactionType,
+			Description:     transaction.Description,
+			CreatedAt:       transaction.CreatedAt,
+		}
+		ResTransactions = append(ResTransactions, ResTransaction)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"Transaction for UserID": userID,
+		"Transactions":           ResTransactions,
+	})
 }

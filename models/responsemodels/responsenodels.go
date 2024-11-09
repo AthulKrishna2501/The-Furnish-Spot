@@ -74,3 +74,11 @@ type Offer struct {
 	CreateAt        time.Time
 	UpdatedAt       time.Time
 }
+
+type Transaction struct {
+	OrderID         uint      `gorm:"default:null"`
+	Amount          float64   `gorm:"not null"`
+	TransactionType string    `gorm:"type:varchar(10);not null"`
+	Description     string    `gorm:"type:varchar(255)"`
+	CreatedAt       time.Time `gorm:"autoCreateTime"`
+}

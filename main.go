@@ -15,5 +15,4 @@ func main() {
 	router := gin.Default()
 	route.RegisterURL(router)
 	router.Run(":3000")
-
 }

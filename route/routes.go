@@ -40,6 +40,7 @@ func RegisterURL(router *gin.Engine) {
 	router.PUT("profile/updateaddress/:id", middleware.AuthMiddleware("user"), user.EditAddress)
 	router.DELETE("/profile/deleteaddress/:id", middleware.AuthMiddleware("user"), user.DeleteAddress)
 	router.GET("/user/wallet", middleware.AuthMiddleware("user"), user.ViewWallet)
+	router.GET("/wallet/transactions", middleware.AuthMiddleware("user"), user.GetWalletTransactions)
 
 	//Orders
 	router.GET("/vieworders", middleware.AuthMiddleware("user"), user.ViewOrders)
@@ -48,6 +49,7 @@ func RegisterURL(router *gin.Engine) {
 	router.GET("/paypal/confirmpayment", user.CapturePayPalOrder)
 	router.GET("/paypal/cancel-payment", user.CapturePayPalOrder)
 	router.POST("/user/returnorder", middleware.AuthMiddleware("user"), user.ReturnOrder)
+	router.POST("/user/generate-invoice/:id", middleware.AuthMiddleware("user"), user.GenerateInvoiceHandler)
 	//Cart
 	router.GET("/user/cart", middleware.AuthMiddleware("user"), user.Cart)
 	router.POST("/user/addtocart", middleware.AuthMiddleware("user"), user.AddToCart)
@@ -95,6 +97,6 @@ func RegisterURL(router *gin.Engine) {
 	router.POST("/admin/addoffer", middleware.AuthMiddleware("admin"), offer.AddOffer)
 	router.PUT("/admin/updateoffer", middleware.AuthMiddleware("admin"), offer.UpdateOffer)
 
-	router.GET("/generate-report", salesreport.GenerateReport)
+	router.GET("/generate-report", middleware.AuthMiddleware("admin"), salesreport.GenerateReport)
 
 }
