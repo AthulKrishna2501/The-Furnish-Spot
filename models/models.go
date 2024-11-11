@@ -86,7 +86,7 @@ type Order struct {
 	OrderDate     time.Time   `gorm:"type:timestamp;default:CURRENT_TIMESTAMP"`
 	Total         float64     `gorm:"not null"`
 	CouponID      int         `gorm:"index"`
-	Discount      int         `gorm:"default:0"`
+	Discount      float64     `gorm:"default:0"`
 	Quantity      int         `gorm:"default:0"`
 	Status        string      `gorm:"check(status IN('Pending', 'Shipped', 'Delivered', 'Canceled','Failed','Returned'))"`
 	Method        string      `gorm:"check(method IN('Credit Card', 'PayPal', 'Bank Transfer'))"`
@@ -103,7 +103,7 @@ type OrderItem struct {
 	ProductID    int     `gorm:"not null;index"`
 	Quantity     int     `gorm:"default:0"`
 	Price        float64 `gorm:"not null"`
-	Discount     int     `gorm:"default:0"`
+	Discount     float64 `gorm:"default:0"`
 }
 
 type Coupon struct {
@@ -166,11 +166,12 @@ type Offer struct {
 }
 
 type SalesReport struct {
-	DateRange        string  `json:"date_range"`
-	TotalSalesCount  int     `json:"total_sales_count"`
-	TotalOrderAmount float64 `json:"total_order_amount"`
-	TotalDiscount    float64 `json:"total_discount"`
-	CouponsDeduction float64 `json:"coupons_deduction"`
+	DateRange        string           `json:"date_range"`
+	TotalSalesCount  int              `json:"total_sales_count"`
+	TotalOrderAmount float64          `json:"total_order_amount"`
+	TotalDiscount    float64          `json:"total_discount"`
+	CouponsDeduction float64          `json:"coupons_deduction"`
+	ProductSales     []ProductDetails `json:"product_sales" gorm:"-"`
 }
 type TempOrder struct {
 	OrderID       string    `gorm:"primaryKey;type:varchar(255);not null"`
@@ -179,7 +180,7 @@ type TempOrder struct {
 	OrderDate     time.Time `gorm:"column:order_date"`
 	Total         float64   `gorm:"column:total"`
 	CouponID      int       `gorm:"column:coupon_id"`
-	Discount      int       `gorm:"column:discount"`
+	Discount      float64   `gorm:"column:discount"`
 	Quantity      int       `gorm:"column:quantity"`
 	Status        string    `gorm:"column:status"`
 	Method        string    `gorm:"column:method"`
@@ -192,18 +193,17 @@ type Invoice struct {
 	InvoiceID      string        `json:"invoice_id"`
 	Date           time.Time     `json:"date"`
 	UserID         int           `json:"user_id"`
-	BillingAddress string        `json:"billing_address"`
 	Items          []InvoiceItem `json:"items"`
 	Subtotal       float64       `json:"subtotal"`
-	Tax            float64       `json:"tax"`
-	Discount       int           `json:"discount"`
+	Discount       float64       `json:"discount"`
 	Total          float64       `json:"total"`
 }
 
 type InvoiceItem struct {
-	Description string  `json:"description"`
+	ProductID   int     `json:"product_id"`
 	Quantity    int     `json:"quantity"`
 	UnitPrice   float64 `json:"unit_price"`
+	Discount    float64 `json:"discount"`
 	TotalPrice  float64 `json:"total_price"`
 }
 
@@ -215,4 +215,15 @@ type WalletTransaction struct {
 	TransactionType string    `gorm:"type:varchar(10);not null"`
 	Description     string    `gorm:"type:varchar(255)"`
 	CreatedAt       time.Time `gorm:"autoCreateTime"`
+}
+
+type ProductDetails struct {
+	ProductID  uint
+	Category   string
+	Quantity   int
+	UnitPrice  float64
+	TotalPrice float64
+	Discount   float64
+	FinalPrice float64
+	OrderID    uint
 }

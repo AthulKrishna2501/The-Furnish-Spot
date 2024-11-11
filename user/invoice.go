@@ -21,66 +21,71 @@ func GeneratePDF(invoice models.Invoice) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to add font: %w", err)
 	}
-	err = pdf.SetFont("DejaVuSans", "", 14)
+	err = pdf.SetFont("DejaVuSans", "", 12)
 	if err != nil {
-		return nil, fmt.Errorf("cannot set font:%w", err)
+		return nil, fmt.Errorf("cannot set font: %w", err)
 	}
 
-	err = pdf.Cell(nil, fmt.Sprintf("Invoice %s", invoice.InvoiceID))
-	if err != nil {
-		return nil, fmt.Errorf("failed to add InvoiceID: %w", err)
-	}
-	pdf.Br(20)
+	pdf.Cell(nil, fmt.Sprintf("Invoice ID: %s", invoice.InvoiceID))
+	pdf.Br(17)
 
-	err = pdf.Cell(nil, fmt.Sprintf("Date: %s", invoice.Date.Format("02-Jan-2006")))
-	if err != nil {
-		return nil, fmt.Errorf("failed to add date: %w", err)
-	}
-	pdf.Br(20)
+	pdf.Cell(nil, fmt.Sprintf("Date: %s", invoice.Date.Format("02-Jan-2006")))
+	pdf.Br(17)
 
-	err = pdf.Cell(nil, fmt.Sprintf("Customer ID: %d", invoice.UserID))
-	if err != nil {
-		return nil, fmt.Errorf("failed to add customer name: %w", err)
-	}
+	pdf.Cell(nil, fmt.Sprintf("Customer ID: %d", invoice.UserID))
+	pdf.Br(17)
+
+	pdf.SetFont("DejaVuSans", "", 10)
+
+	pdf.Cell(nil, "ProductID")
+	pdf.SetX(150)
+	pdf.Cell(nil, "Qty")
+	pdf.SetX(180)
+	pdf.Cell(nil, "Unit Price")
+	pdf.SetX(230)
+	pdf.Cell(nil, "Discount")
+	pdf.SetX(280)
+	pdf.Cell(nil, "Total")
 	pdf.Br(15)
 
-	err = pdf.Cell(nil, fmt.Sprintf("Billing Address: %s", invoice.BillingAddress))
-	if err != nil {
-		return nil, fmt.Errorf("failed to add billing address: %w", err)
-	}
-	pdf.Br(20)
+	pdf.Line(5, pdf.GetY(), 400, pdf.GetY())
+	pdf.Br(10)
 
+	subtotal := 0.0
 	for _, item := range invoice.Items {
-		err = pdf.Cell(nil, fmt.Sprintf("%s - Qty: %d - Price: %.2f - Total: %.2f",
-			item.Description, item.Quantity, item.UnitPrice, item.TotalPrice))
-		if err != nil {
-			return nil, fmt.Errorf("failed to add item: %w", err)
-		}
-		pdf.Br(15)
+		fmt.Printf("Item: %+v\n", item)
+
+		itemTotal := (item.UnitPrice * float64(item.Quantity)) - item.Discount
+		subtotal += itemTotal
+
+		pdf.Cell(nil, fmt.Sprintf("%d", item.ProductID))
+		pdf.SetX(150)
+		pdf.Cell(nil, fmt.Sprintf("%d", item.Quantity))
+
+		pdf.SetX(180)
+		pdf.Cell(nil, fmt.Sprintf("%.2f", item.UnitPrice))
+
+		pdf.SetX(230)
+		pdf.Cell(nil, fmt.Sprintf("%.2f", item.Discount))
+
+		pdf.SetX(280)
+		pdf.Cell(nil, fmt.Sprintf("%.2f", itemTotal))
+
+		pdf.Br(10)
 	}
 
-	err = pdf.Cell(nil, fmt.Sprintf("Subtotal: %.2f", invoice.Subtotal))
-	if err != nil {
-		return nil, fmt.Errorf("failed to add subtotal: %w", err)
-	}
+	discountApplied := invoice.Subtotal - subtotal
+	total := subtotal - discountApplied
+
+	pdf.Br(15)
+	pdf.SetFont("DejaVuSans", "", 12)
+	pdf.Cell(nil, fmt.Sprintf("Subtotal: %.2f", subtotal))
+	pdf.Br(15)
+	pdf.Cell(nil, fmt.Sprintf("Discount Applied: %.2f", discountApplied))
 	pdf.Br(15)
 
-	err = pdf.Cell(nil, fmt.Sprintf("Tax: %.2f", invoice.Tax))
-	if err != nil {
-		return nil, fmt.Errorf("failed to add tax: %w", err)
-	}
+	pdf.Cell(nil, fmt.Sprintf("Total: %.2f", total))
 	pdf.Br(15)
-
-	err = pdf.Cell(nil, fmt.Sprintf("Discount: %d", invoice.Discount))
-	if err != nil {
-		return nil, fmt.Errorf("failed to add discount: %w", err)
-	}
-	pdf.Br(15)
-
-	err = pdf.Cell(nil, fmt.Sprintf("Total: %.2f", invoice.Total))
-	if err != nil {
-		return nil, fmt.Errorf("failed to add total: %w", err)
-	}
 
 	var buffer bytes.Buffer
 	_, err = pdf.WriteTo(&buffer)
@@ -90,7 +95,6 @@ func GeneratePDF(invoice models.Invoice) ([]byte, error) {
 
 	return buffer.Bytes(), nil
 }
-
 func GenerateInvoiceHandler(c *gin.Context) {
 	var invoice models.Invoice
 	var order models.Order
@@ -108,19 +112,27 @@ func GenerateInvoiceHandler(c *gin.Context) {
 	}
 
 	var invoiceItems []models.InvoiceItem
+	var subtotal float64
 	for _, item := range items {
+		totalPrice := (item.Price * float64(item.Quantity)) - item.Discount
+
 		invoiceItems = append(invoiceItems, models.InvoiceItem{
-			Quantity:  item.Quantity,
-			UnitPrice: item.Price,
+			ProductID:  item.ProductID,
+			Discount:   float64(item.Discount),
+			Quantity:   item.Quantity,
+			UnitPrice:  item.Price,
+			TotalPrice: totalPrice, 
 		})
+
+		subtotal += totalPrice
 	}
 
 	invoice.InvoiceID = fmt.Sprintf("INV-%d", order.OrderID)
 	invoice.Date = time.Now()
 	invoice.UserID = order.UserID
-	invoice.Subtotal = order.Total
+	invoice.Subtotal = subtotal 
 	invoice.Discount = order.Discount
-	invoice.Total = order.Total
+	invoice.Total = subtotal - order.Discount
 	invoice.Items = invoiceItems
 
 	pdfBytes, err := GeneratePDF(invoice)

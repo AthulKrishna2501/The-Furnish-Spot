@@ -71,20 +71,20 @@ func RegisterURL(router *gin.Engine) {
 
 	//Admin
 	router.POST("/adminlogin", admin.AdminLogin)
-	router.GET("/viewcategories", category.ViewCategory)
-	router.POST("/addcategory", category.AddCategory)
-	router.PUT("/updatecategory/:id", category.EditCategory)
-	router.DELETE("/deletecategory/:id", category.DeleteCategory)
+	router.GET("/viewcategories", middleware.AuthMiddleware("admin"), category.ViewCategory)
+	router.POST("/addcategory", middleware.AuthMiddleware("admin"), category.AddCategory)
+	router.PUT("/updatecategory/:id", middleware.AuthMiddleware("admin"), category.EditCategory)
+	router.DELETE("/deletecategory/:id", middleware.AuthMiddleware("admin"), category.DeleteCategory)
 
-	router.GET("/viewproducts", product.ViewProducts)
-	router.POST("/addproducts", product.AddProducts)
-	router.PUT("/updateproduct/:id", product.UpdateProduct)
-	router.DELETE("/deleteproduct/:id", product.DeleteProduct)
-	router.PUT("/admin/updatestock/:id", product.UpdateProductStock)
+	router.GET("/viewproducts", middleware.AuthMiddleware("admin"), product.ViewProducts)
+	router.POST("/addproducts", middleware.AuthMiddleware("admin"), product.AddProducts)
+	router.PUT("/updateproduct/:id", middleware.AuthMiddleware("admin"), product.UpdateProduct)
+	router.DELETE("/deleteproduct/:id", middleware.AuthMiddleware("admin"), product.DeleteProduct)
+	router.PUT("/admin/updatestock/:id", middleware.AuthMiddleware("admin"), product.UpdateProductStock)
 
-	router.GET("/listusers", adminuser.ListUsers)
-	router.POST("blockuser/:id", adminuser.BlockUser)
-	router.POST("/unblockuser/:id", adminuser.UnblockUser)
+	router.GET("/listusers", middleware.AuthMiddleware("admin"), adminuser.ListUsers)
+	router.POST("blockuser/:id", middleware.AuthMiddleware("admin"), adminuser.BlockUser)
+	router.POST("/unblockuser/:id", middleware.AuthMiddleware("admin"), adminuser.UnblockUser)
 
 	router.GET("/admin/listorders", middleware.AuthMiddleware("admin"), order.ListOrders)
 	router.PUT("/admin/changeorderstatus/:id", middleware.AuthMiddleware("admin"), order.ChangeOrderStatus)
