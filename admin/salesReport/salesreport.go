@@ -3,6 +3,7 @@ package salesreport
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	db "github.com/AthulKrishna2501/The-Furniture-Spot/DB"
@@ -143,4 +144,142 @@ func GenerateExcelReport(report models.SalesReport) (string, error) {
 	}
 
 	return outputPath, nil
+}
+
+func GetSalesData(c *gin.Context) {
+	filter := c.Query("filter")
+
+	var dates []string
+	var sales []float64
+
+	switch filter {
+	case "yearly":
+		rows, err := db.Db.Raw(`
+			  SELECT TO_CHAR(order_date, 'YYYY') AS date, SUM(total) AS sales
+			  FROM orders
+			  GROUP BY TO_CHAR(order_date, 'YYYY')
+			  ORDER BY TO_CHAR(order_date, 'YYYY')
+		 `).Rows()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var date string
+			var sale float64
+			if err := rows.Scan(&date, &sale); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			dates = append(dates, date)
+			sales = append(sales, sale)
+		}
+
+	case "monthly":
+		rows, err := db.Db.Raw(`
+			  SELECT TO_CHAR(order_date, 'YYYY-MM') AS date, SUM(total) AS sales
+			  FROM orders
+			  GROUP BY TO_CHAR(order_date, 'YYYY-MM')
+			  ORDER BY TO_CHAR(order_date, 'YYYY-MM')
+		 `).Rows()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var date string
+			var sale float64
+			if err := rows.Scan(&date, &sale); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			dates = append(dates, date)
+			sales = append(sales, sale)
+		}
+
+	case "weekly":
+		rows, err := db.Db.Raw(`
+			  SELECT TO_CHAR(order_date, 'IYYY-IW') AS date, SUM(total) AS sales
+			  FROM orders
+			  GROUP BY TO_CHAR(order_date, 'IYYY-IW')
+			  ORDER BY TO_CHAR(order_date, 'IYYY-IW')
+		 `).Rows()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var date string
+			var sale float64
+			if err := rows.Scan(&date, &sale); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			dates = append(dates, date)
+			sales = append(sales, sale)
+		}
+
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid filter"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"dates": dates,
+		"sales": sales,
+	})
+}
+
+func GetTopSellingProducts(c *gin.Context) {
+	limitParam := c.DefaultQuery("limit", "10")
+	limit, _ := strconv.Atoi(limitParam)
+
+	var products []map[string]interface{}
+
+	db.Db.Table("order_items").
+		Select("product_id, SUM(quantity) as total_sold").
+		Group("product_id").
+		Order("total_sold DESC").
+		Limit(limit).
+		Find(&products)
+
+	c.JSON(http.StatusOK, products)
+}
+
+func GetTopSellingCategories(c *gin.Context) {
+	limitParam := c.DefaultQuery("limit", "10")
+	limit, _ := strconv.Atoi(limitParam)
+
+	var categories []map[string]interface{}
+
+	db.Db.Table("order_items").
+		Joins("JOIN products ON order_items.product_id = products.product_id").
+		Select("products.category_id, SUM(order_items.quantity) as total_sold").
+		Group("products.category_id").
+		Order("total_sold DESC").
+		Limit(limit).
+		Find(&categories)
+
+	c.JSON(http.StatusOK, categories)
+}
+
+func GetLedgerBook(c *gin.Context) {
+	startDate := c.Query("start_date")
+	endDate := c.Query("end_date")
+
+	var ledgerEntries []map[string]interface{}
+
+	db.Db.Table("orders").
+		Select("order_date as date, 'Sale' as type, total as amount, order_id").
+		Where("order_date BETWEEN ? AND ?", startDate, endDate).
+		Order("order_date DESC").
+		Find(&ledgerEntries)
+
+	c.JSON(http.StatusOK, ledgerEntries)
 }

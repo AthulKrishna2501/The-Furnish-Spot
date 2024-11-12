@@ -275,6 +275,7 @@ func createOrder(userID uint, input models.OrderInput, orderItems []models.Order
 }
 
 func CapturePayPalOrder(c *gin.Context) {
+
 	client, err := NewPayPalClient()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize PayPal client"})
@@ -329,6 +330,28 @@ func CapturePayPalOrder(c *gin.Context) {
 
 	if err := db.Db.Create(&originalOrder).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create original order"})
+		return
+	}
+
+	var cartItems []models.Cart
+	if err := db.Db.Where("user_id = ?", tempOrder.UserID).Find(&cartItems).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch cart items"})
+		return
+	}
+
+	var orderItems []models.OrderItem
+	for _, cartItem := range cartItems {
+		orderItem := models.OrderItem{
+			OrderID:   originalOrder.OrderID,
+			ProductID: cartItem.ProductID,
+			Quantity:  cartItem.Quantity,
+			Price:     (float64(cartItem.Total) / float64(cartItem.Quantity)),
+		}
+		orderItems = append(orderItems, orderItem)
+	}
+
+	if err := db.Db.Create(&orderItems).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create order items"})
 		return
 	}
 	if err := db.Db.Where("user_id=?", tempOrder.UserID).Delete(&models.Cart{}).Error; err != nil {

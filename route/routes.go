@@ -98,5 +98,9 @@ func RegisterURL(router *gin.Engine) {
 	router.PUT("/admin/updateoffer", middleware.AuthMiddleware("admin"), offer.UpdateOffer)
 
 	router.GET("/generate-report", middleware.AuthMiddleware("admin"), salesreport.GenerateReport)
+	router.GET("/get-sales-data", middleware.AuthMiddleware("admin"), salesreport.GetSalesData)
+	router.GET("/top-selling-product", middleware.AuthMiddleware("admin"), salesreport.GetTopSellingProducts)
+	router.GET("/top-selling-category", middleware.AuthMiddleware("admin"), salesreport.GetTopSellingCategories)
+	router.GET("/ledger-book", middleware.AuthMiddleware("admin"), salesreport.GetLedgerBook)
 
 }
