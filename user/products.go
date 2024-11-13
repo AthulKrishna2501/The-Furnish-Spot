@@ -7,6 +7,7 @@ import (
 	"github.com/AthulKrishna2501/The-Furniture-Spot/models"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/models/responsemodels"
 	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
 )
 
 func ViewProducts(c *gin.Context) {
@@ -62,12 +63,19 @@ func ViewProducts(c *gin.Context) {
 		}
 
 		var recentReviews []models.ReviewRating
-		db.Db.Table("review_ratings").
+		if err := db.Db.Table("review_ratings").
 			Select("review_rating_id, user_id, rating, comment, created_at").
 			Where("product_id = ?", dbProduct.ProductID).
 			Order("created_at DESC").
 			Limit(3).
-			Find(&recentReviews)
+			Find(&recentReviews); err != nil {
+			log.WithFields(log.Fields{
+				"ProductID": dbProduct.ProductID,
+				"error":     err,
+			}).Error("error retrieving reviewratings")
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error})
+			return
+		}
 
 		reviewResponses := make([]responsemodels.ReviewRating, len(recentReviews))
 		for j, review := range recentReviews {

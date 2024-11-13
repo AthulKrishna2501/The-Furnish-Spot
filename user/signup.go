@@ -10,6 +10,7 @@ import (
 	"github.com/AthulKrishna2501/The-Furniture-Spot/models"
 	"github.com/dchest/captcha"
 	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -75,7 +76,14 @@ func SignUp(c *gin.Context) {
 		Code:   otp,
 		Expiry: time.Now().Add(time.Minute * 5),
 	}
-	db.Db.Create(&newOtpRecord)
+	if err := db.Db.Create(&newOtpRecord).Error; err != nil {
+		log.WithFields(log.Fields{
+			"Email": input.Email,
+			"error": err,
+		}).Error("error creating otp")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
 	go helper.SendEmail(input.Email, otp)
 
@@ -85,7 +93,15 @@ func SignUp(c *gin.Context) {
 		Password:    string(hashedPassword),
 		PhoneNumber: input.PhoneNumber,
 	}
-	db.Db.Create(&user)
+	if err:=db.Db.Create(&user).Error;err!=nil{
+		log.WithFields(log.Fields{
+			"UserName":input.UserName,
+			"error":err,
+		}).Error("error creating user")
+		c.JSON(http.StatusInternalServerError,gin.H{"error":err.Error()})
+		return
+
+	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "OTP send successfully"})
 }

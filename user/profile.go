@@ -95,6 +95,10 @@ func EditProfile(c *gin.Context) {
 
 	result := db.Db.Model(&models.User{}).Where("id = ?", userID).Updates(editUser)
 	if result.Error != nil {
+		log.WithFields(log.Fields{
+			"UserName": input.UserName,
+			"error":    err,
+		}).Error("error updating user")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return
 	}
@@ -116,6 +120,13 @@ func ViewAddress(c *gin.Context) {
 	fmt.Println(userID)
 
 	result := db.Db.Where("user_id = ? AND deleted_at IS NULL", userID).Find(&address)
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "cannot find userID",
+			"err":   result.Error,
+		})
+		return
+	}
 
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		c.JSON(http.StatusNotFound, gin.H{"message": "Address not found"})

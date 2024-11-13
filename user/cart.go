@@ -10,6 +10,7 @@ import (
 	"github.com/AthulKrishna2501/The-Furniture-Spot/models"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/models/responsemodels"
 	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -88,6 +89,11 @@ func AddToCart(c *gin.Context) {
 		cartItem.Quantity += item.Quantity
 		cartItem.Total = cartItem.Quantity * int(product.Price)
 		if err := db.Db.Save(&cartItem).Error; err != nil {
+			log.WithFields(log.Fields{
+				"UserID":    userID,
+				"ProductID": item.ProductID,
+				"error":     err,
+			}).Error("error saving cartItem")
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error updating cart item"})
 			return
 		}
@@ -103,10 +109,14 @@ func AddToCart(c *gin.Context) {
 			Total:     item.Quantity * int(product.Price),
 		}
 		if err := db.Db.Create(&newCartItem).Error; err != nil {
+			log.WithFields(log.Fields{
+				"UserID":    userID,
+				"ProductID": item.ProductID,
+				"error":     err,
+			}).Error("error creating newcartItem")
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error adding item to cart"})
 			return
 		}
-
 
 		c.JSON(http.StatusCreated, gin.H{"message": "Item added to cart"})
 
@@ -151,6 +161,10 @@ func RemoveItem(c *gin.Context) {
 		return
 	}
 	if err := db.Db.Delete(&cart).Error; err != nil {
+		log.WithFields(log.Fields{
+			"UserID":    userID,
+			"ProductID": cart.ProductID,
+		}).Error("error deleting cart")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to remove item from cart"})
 		return
 	}

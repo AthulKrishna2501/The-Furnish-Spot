@@ -2,20 +2,19 @@ package user
 
 import (
 	"errors"
-	"log"
 	"net/http"
 	"time"
 
 	db "github.com/AthulKrishna2501/The-Furniture-Spot/DB"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/models"
 	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
 func VerifyOTP(c *gin.Context) {
 	var input models.VerifyOTP
 
-	
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -24,7 +23,6 @@ func VerifyOTP(c *gin.Context) {
 	var otp models.OTP
 	log.Printf("Email: %s, OTP: %s", input.Email, input.Code)
 
-	
 	if err := db.Db.Where("email = ? AND code = ?", input.Email, input.Code).First(&otp).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid OTP"})
@@ -39,7 +37,6 @@ func VerifyOTP(c *gin.Context) {
 		return
 	}
 
-	
 	var user models.TempUser
 	if err := db.Db.Where("email = ?", input.Email).First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -60,6 +57,11 @@ func VerifyOTP(c *gin.Context) {
 	log.Printf("New User Data: %+v\n", newUser)
 
 	if err := db.Db.Create(&newUser).Error; err != nil {
+		log.WithFields(log.Fields{
+			"UserName": user.UserName,
+			"error":    err,
+		}).Error("error creating user")
+
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
 		return
 	}

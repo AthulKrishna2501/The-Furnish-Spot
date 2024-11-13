@@ -9,6 +9,7 @@ import (
 	"github.com/AthulKrishna2501/The-Furniture-Spot/middleware"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/models"
 	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -53,6 +54,10 @@ func AddAddress(c *gin.Context) {
 	}
 
 	if err := db.Db.Create(&address).Error; err != nil {
+		log.WithFields(log.Fields{
+			"UserID": userID,
+			"error":  err,
+		}).Error("error creating address")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create address"})
 		return
 	}
@@ -103,7 +108,14 @@ func EditAddress(c *gin.Context) {
 		Landmark:     input.Landmark,
 	}
 
-	db.Db.Model(&models.Address{}).Where("address_id=?", addressID).Updates(&updateaddress)
+	if err := db.Db.Model(&models.Address{}).Where("address_id=?", addressID).Updates(&updateaddress).Error; err != nil {
+		log.WithFields(log.Fields{
+			"UserID": userID,
+			"error":  err,
+		}).Error("error updating address")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{"message": "Address updated successfully"})
 }
 
@@ -129,6 +141,13 @@ func DeleteAddress(c *gin.Context) {
 		return
 	}
 
-	db.Db.Where("address_id=?", AddressID).Delete(&address)
+	if err := db.Db.Where("address_id=?", AddressID).Delete(&address).Error; err != nil {
+		log.WithFields(log.Fields{
+			"AddressID": AddressID,
+			"error":     err,
+		}).Error("error deleting address")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{"message": "Address deleted successfully"})
 }

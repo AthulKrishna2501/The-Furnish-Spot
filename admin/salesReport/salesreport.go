@@ -10,6 +10,7 @@ import (
 	"github.com/AthulKrishna2501/The-Furniture-Spot/models"
 	"github.com/gin-gonic/gin"
 	"github.com/signintech/gopdf"
+	log "github.com/sirupsen/logrus"
 	"github.com/xuri/excelize/v2"
 )
 
@@ -33,14 +34,20 @@ func GenerateReport(c *gin.Context) {
 		query = query.Where("order_date BETWEEN ? AND ?", startDate, endDate)
 	}
 
-	query.Select(`
+	if err := query.Select(`
 		COUNT(*) as total_sales_count,
 		SUM(total) as total_order_amount,
 		SUM(discount) as total_discount,
 		SUM(CASE WHEN coupon_id IS NOT NULL THEN discount ELSE 0 END) as coupons_deduction
-	`).Scan(&report)
+	`).Scan(&report).Error; err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("error in database query")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
-	db.Db.Table("order_items AS oi").
+	if err := db.Db.Table("order_items AS oi").
 		Select(`
         p.product_id,
         p.product_name,
@@ -50,7 +57,13 @@ func GenerateReport(c *gin.Context) {
     `).
 		Joins("JOIN products AS p ON p.product_id = oi.product_id").
 		Group("p.product_id, p.product_name,oi.quantity").
-		Scan(&productSales)
+		Scan(&productSales).Error; err != nil {
+		log.WithFields(log.Fields{
+			"err": err,
+		}).Error("error in database query")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
 
 	fmt.Println("Product Sales Data:", productSales)
 
@@ -161,6 +174,9 @@ func GetSalesData(c *gin.Context) {
 			  ORDER BY TO_CHAR(order_date, 'YYYY')
 		 `).Rows()
 		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+			}).Error("Error in database query")
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -170,6 +186,9 @@ func GetSalesData(c *gin.Context) {
 			var date string
 			var sale float64
 			if err := rows.Scan(&date, &sale); err != nil {
+				log.WithFields(log.Fields{
+					"error": err,
+				}).Error("Error in scanning column")
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
 			}
@@ -185,6 +204,9 @@ func GetSalesData(c *gin.Context) {
 			  ORDER BY TO_CHAR(order_date, 'YYYY-MM')
 		 `).Rows()
 		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+			}).Error("error in scanning column")
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -194,6 +216,9 @@ func GetSalesData(c *gin.Context) {
 			var date string
 			var sale float64
 			if err := rows.Scan(&date, &sale); err != nil {
+				log.WithFields(log.Fields{
+					"error": err,
+				}).Error("error in scanning column")
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
 			}
@@ -209,6 +234,9 @@ func GetSalesData(c *gin.Context) {
 			  ORDER BY TO_CHAR(order_date, 'IYYY-IW')
 		 `).Rows()
 		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+			}).Error("error in scannning column")
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -218,6 +246,9 @@ func GetSalesData(c *gin.Context) {
 			var date string
 			var sale float64
 			if err := rows.Scan(&date, &sale); err != nil {
+				log.WithFields(log.Fields{
+					"error": err,
+				}).Error("Error in scanning rows")
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
 			}
@@ -242,12 +273,18 @@ func GetTopSellingProducts(c *gin.Context) {
 
 	var products []map[string]interface{}
 
-	db.Db.Table("order_items").
+	if err := db.Db.Table("order_items").
 		Select("product_id, SUM(quantity) as total_sold").
 		Group("product_id").
 		Order("total_sold DESC").
 		Limit(limit).
-		Find(&products)
+		Find(&products); err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Error("error in querying order_items")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error})
+		return
+	}
 
 	c.JSON(http.StatusOK, products)
 }
@@ -258,13 +295,19 @@ func GetTopSellingCategories(c *gin.Context) {
 
 	var categories []map[string]interface{}
 
-	db.Db.Table("order_items").
+	if err := db.Db.Table("order_items").
 		Joins("JOIN products ON order_items.product_id = products.product_id").
 		Select("products.category_id, SUM(order_items.quantity) as total_sold").
 		Group("products.category_id").
 		Order("total_sold DESC").
 		Limit(limit).
-		Find(&categories)
+		Find(&categories); err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Error("Error is querying order_items")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error})
+		return
+	}
 
 	c.JSON(http.StatusOK, categories)
 }
@@ -275,11 +318,18 @@ func GetLedgerBook(c *gin.Context) {
 
 	var ledgerEntries []map[string]interface{}
 
-	db.Db.Table("orders").
+	if err := db.Db.Table("orders").
 		Select("order_date as date, 'Sale' as type, total as amount, order_id").
 		Where("order_date BETWEEN ? AND ?", startDate, endDate).
 		Order("order_date DESC").
-		Find(&ledgerEntries)
+		Find(&ledgerEntries); err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Error("error in querying orders")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error})
+		return
+
+	}
 
 	c.JSON(http.StatusOK, ledgerEntries)
 }
