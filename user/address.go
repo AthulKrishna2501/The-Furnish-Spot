@@ -49,6 +49,7 @@ func AddAddress(c *gin.Context) {
 		AddressLine1: input.AddressLine1,
 		AddressLine2: input.AddressLine2,
 		City:         input.City,
+		Country:      input.Country,
 		PostalCode:   input.PostalCode,
 		Landmark:     input.Landmark,
 	}

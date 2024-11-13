@@ -41,16 +41,16 @@ type NewPassword struct {
 type InputAddress struct {
 	AddressLine1 string `json:"addressline1"`
 	AddressLine2 string `json:"addressline2"`
-	Country      string `json:"country"`
-	City         string `json:"city"`
-	PostalCode   string `json:"postalcode" validate:"required,len=6,numeric"`
-	Landmark     string `json:"landmark"`
+	Country      string `json:"country" validate:"required,oneof=IND US UK CA AU"`
+	City       string `json:"city"`
+	PostalCode string `json:"postalcode" validate:"required,len=6,numeric"`
+	Landmark   string `json:"landmark"`
 }
 
 type OrderInput struct {
 	AddressID  int    `json:"address_id"`
 	CouponCode string `json:"coupon_code,omitempty"`
-	Method     string `json:"method,omitempty"`
+	Method     string `json:"method"`
 }
 
 type CartInput struct {
@@ -81,6 +81,6 @@ type ReturnOrder struct {
 }
 
 type OfferInput struct {
-	ProductID   int `json:"product_id"`
+	ProductID       int `json:"product_id"`
 	OfferPercentage int `json:"offer_percentage"`
 }

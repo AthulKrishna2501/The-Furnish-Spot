@@ -121,16 +121,15 @@ type Coupon struct {
 }
 type ReviewRating struct {
 	ReviewRatingID int       `gorm:"primaryKey;autoIncrement" json:"review_rating_id"`
-	UserID         int       `gorm:"not null;index" json:"user_id"`    // Foreign key reference to User
-	ProductID      int       `gorm:"not null;index" json:"product_id"` // Foreign key reference to Product
+	UserID         int       `gorm:"not null;index" json:"user_id"`
+	ProductID      int       `gorm:"not null;index" json:"product_id"`
 	Rating         int       `json:"rating"`
-	Comment        string    `json:"comment"` // Corrected JSON tag
+	Comment        string    `json:"comment"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
 
-	// Relationships
-	User    User    `gorm:"foreignKey:UserID;references:ID"`           // Assuming ID is the primary key in User
-	Product Product `gorm:"foreignKey:ProductID;references:ProductID"` // Assuming ProductID is the primary key in Product
+	User    User    `gorm:"foreignKey:UserID;references:ID"`
+	Product Product `gorm:"foreignKey:ProductID;references:ProductID"`
 }
 type TempUser struct {
 	UserName    string `json:"username"`
@@ -190,21 +189,21 @@ type TempOrder struct {
 }
 
 type Invoice struct {
-	InvoiceID      string        `json:"invoice_id"`
-	Date           time.Time     `json:"date"`
-	UserID         int           `json:"user_id"`
-	Items          []InvoiceItem `json:"items"`
-	Subtotal       float64       `json:"subtotal"`
-	Discount       float64       `json:"discount"`
-	Total          float64       `json:"total"`
+	InvoiceID string        `json:"invoice_id"`
+	Date      time.Time     `json:"date"`
+	UserID    int           `json:"user_id"`
+	Items     []InvoiceItem `json:"items"`
+	Subtotal  float64       `json:"subtotal"`
+	Discount  float64       `json:"discount"`
+	Total     float64       `json:"total"`
 }
 
 type InvoiceItem struct {
-	ProductID   int     `json:"product_id"`
-	Quantity    int     `json:"quantity"`
-	UnitPrice   float64 `json:"unit_price"`
-	Discount    float64 `json:"discount"`
-	TotalPrice  float64 `json:"total_price"`
+	ProductID  int     `json:"product_id"`
+	Quantity   int     `json:"quantity"`
+	UnitPrice  float64 `json:"unit_price"`
+	Discount   float64 `json:"discount"`
+	TotalPrice float64 `json:"total_price"`
 }
 
 type WalletTransaction struct {

@@ -251,20 +251,6 @@ func CancelOrders(c *gin.Context) {
 				return
 			}
 
-		} else if err == gorm.ErrRecordNotFound {
-
-			NewWallet := models.Wallet{
-				UserID:  userID,
-				Balance: orders.Total,
-			}
-			if err := db.Db.Create(&NewWallet).Error; err != nil {
-				log.WithFields(log.Fields{
-					"UserID": userID,
-					"Wallet": wallet.WalletID,
-				}).Error("Cannot create wallet")
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create wallet"})
-				return
-			}
 		}
 	}
 	orders.Status = "Canceled"
@@ -337,21 +323,36 @@ func ForgotPassword(c *gin.Context) {
 
 func ViewWallet(c *gin.Context) {
 	var wallet models.Wallet
-
 	claims, _ := middleware.GetClaims(c)
-
 	userID := claims.ID
 
-	if err := db.Db.Where("user_id", userID).First(&wallet).Error; err != nil {
-		log.WithFields(log.Fields{
-			"UserID":   userID,
-			"WalletID": wallet.WalletID,
-		}).Error("Cannot find wallet")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Cannot find wallet"})
-		return
+	if err := db.Db.Where("user_id = ?", userID).First(&wallet).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			wallet = models.Wallet{
+				UserID:  userID,
+				Balance: 0,
+			}
+			if createErr := db.Db.Create(&wallet).Error; createErr != nil {
+				log.WithFields(log.Fields{
+					"UserID": userID,
+				}).Error("Failed to create wallet")
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create wallet"})
+				return
+			}
+			log.WithFields(log.Fields{
+				"UserID": userID,
+			}).Info("New wallet created")
+		} else {
+			log.WithFields(log.Fields{
+				"UserID":   userID,
+				"WalletID": wallet.WalletID,
+			}).Error("Error finding wallet")
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error finding wallet"})
+			return
+		}
 	}
 
-	c.JSON(http.StatusOK, gin.H{"Wallet retrived successfully": wallet})
+	c.JSON(http.StatusOK, gin.H{"Balance": wallet.Balance})
 }
 
 func GetWalletTransactions(c *gin.Context) {
@@ -362,6 +363,10 @@ func GetWalletTransactions(c *gin.Context) {
 
 	if err := db.Db.Where("user_id = ?", userID).Order("created_at desc").Find(&transactions).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error retrieving transactions"})
+		return
+	}
+	if len(transactions) == 0 {
+		c.JSON(http.StatusOK, gin.H{"message": "No transactions found"})
 		return
 	}
 
@@ -378,7 +383,6 @@ func GetWalletTransactions(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"Transaction for UserID": userID,
-		"Transactions":           ResTransactions,
+		"Transactions": ResTransactions,
 	})
 }

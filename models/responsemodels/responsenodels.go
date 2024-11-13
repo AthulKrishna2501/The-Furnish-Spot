@@ -44,11 +44,11 @@ type CartResponse struct {
 type OrderResponse struct {
 	UserID         int       `json:"user_id"`
 	OrderID        int       `json:"order_id"`
-	Total          float64   `json:"total"`
 	Quantity       int       `json:"quantity"`
 	DiscountAmount float64   `json:"discount_amount"`
-	Status         string    `json:"status"`
+	Total          float64   `json:"total"`
 	Method         string    `json:"method"`
+	Status         string    `json:"status"`
 	PaymentStatus  string    `json:"payment_status"`
 	OrderDate      time.Time `json:"order_date"`
 }
@@ -61,8 +61,8 @@ type Wishlist struct {
 }
 
 type ReviewRating struct {
-	ReviewID  int       `json:"review_id"` // Use int to match with ReviewRatingID
-	UserID    int       `json:"user_id"`   // This should be an int representing the UserID
+	ReviewID  int       `json:"review_id"`
+	UserID    int       `json:"user_id"`  
 	Rating    int       `json:"rating"`
 	Comment   string    `json:"comment"`
 	CreatedAt time.Time `json:"created_at"`

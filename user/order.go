@@ -198,6 +198,79 @@ func Orders(c *gin.Context) {
 		}
 
 		c.JSON(http.StatusOK, gin.H{"message": "Order placed successfully", "order": orderResponse})
+	case "Wallet":
+		var wallet models.Wallet
+
+		if err := db.Db.Where("user_id = ?", userID).First(&wallet).Error; err != nil {
+			log.WithFields(log.Fields{"UserID": userID}).Error("Cannot find wallet")
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Cannot find wallet"})
+			return
+		}
+
+		if totalAmount > wallet.Balance {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Insufficient wallet balance"})
+			return
+		}
+
+		order := models.Order{
+			UserID:        int(userID),
+			CouponID:      coupon.CouponID,
+			Quantity:      totalQuantity,
+			Discount:      totalDiscount,
+			Total:         totalAmount,
+			Status:        "Pending",
+			Method:        input.Method,
+			PaymentStatus: "Pending",
+			OrderDate:     time.Now(),
+		}
+
+		tx := db.Db.Begin()
+
+		wallet.Balance -= totalAmount
+		if err := tx.Save(&wallet).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update wallet balance"})
+			return
+		}
+
+		if err := tx.Create(&order).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create order"})
+			return
+		}
+
+		for _, item := range orderItems {
+			item.OrderID = order.OrderID
+			if err := tx.Create(&item).Error; err != nil {
+				tx.Rollback()
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add order item"})
+				return
+			}
+		}
+
+		if err := tx.Where("user_id = ?", userID).Delete(&models.Cart{}).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to clear cart"})
+			return
+		}
+
+		if err := tx.Commit().Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to commit transaction"})
+			return
+		}
+		orderResponse := responsemodels.OrderResponse{
+			UserID:         int(userID),
+			OrderID:        order.OrderID,
+			Quantity:       totalQuantity,
+			DiscountAmount: totalDiscount,
+			Total:          totalAmount,
+			Status:         order.Status,
+			Method:         order.Method,
+			PaymentStatus:  order.PaymentStatus,
+			OrderDate:      order.OrderDate,
+		}
+		c.JSON(http.StatusOK, gin.H{"message": "Order placed successfully", "order": orderResponse})
+
 	default:
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid payment method"})
 		return

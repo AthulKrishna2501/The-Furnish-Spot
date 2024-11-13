@@ -41,6 +41,7 @@ func ViewProducts(c *gin.Context) {
 			  COUNT(DISTINCT r.review_rating_id) as total_reviews
 		 FROM products p
 		 LEFT JOIN review_ratings r ON r.product_id = p.product_id
+		 WHERE p.deleted_at IS NULL
 		 GROUP BY p.product_id
 	`).Find(&dbProducts)
 
@@ -63,17 +64,17 @@ func ViewProducts(c *gin.Context) {
 		}
 
 		var recentReviews []models.ReviewRating
-		if err := db.Db.Table("review_ratings").
+		if result := db.Db.Table("review_ratings").
 			Select("review_rating_id, user_id, rating, comment, created_at").
 			Where("product_id = ?", dbProduct.ProductID).
 			Order("created_at DESC").
 			Limit(3).
-			Find(&recentReviews); err != nil {
+			Find(&recentReviews); result.Error != nil {
 			log.WithFields(log.Fields{
 				"ProductID": dbProduct.ProductID,
-				"error":     err,
+				"error":     result.Error,
 			}).Error("error retrieving reviewratings")
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 			return
 		}
 

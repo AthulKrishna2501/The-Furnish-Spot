@@ -1,7 +1,6 @@
 package order
 
 import (
-	"fmt"
 	"net/http"
 
 	db "github.com/AthulKrishna2501/The-Furniture-Spot/DB"
@@ -46,34 +45,21 @@ func ListOrders(c *gin.Context) {
 	}
 
 	var orderResponses []responsemodels.OrderResponse
-
 	for _, order := range orders {
-		if order.Status == "Delivered" {
-			order.PaymentStatus = "Paid"
-		}
-		var totalQuantity int
-		var orderItems []models.OrderItem
-		if err := db.Where("order_id = ?", order.OrderID).Find(&orderItems).Error; err == nil {
-			for _, item := range orderItems {
-				totalQuantity += item.Quantity
-			}
-		} else {
-			fmt.Printf("Error fetching items for Order ID %d: %v\n", order.OrderID, err)
-		}
-
 		orderResponses = append(orderResponses, responsemodels.OrderResponse{
-			UserID:        order.UserID,
-			OrderID:       order.OrderID,
-			Total:         order.Total,
-			Quantity:      totalQuantity,
-			Status:        order.Status,
-			Method:        order.Method,
-			PaymentStatus: order.PaymentStatus,
-			OrderDate:     order.OrderDate,
+			OrderID:        order.OrderID,
+			UserID:         order.UserID,
+			Quantity:       order.Quantity,
+			DiscountAmount: order.Discount,
+			Total:          order.Total,
+			Method:         order.Method,
+			Status:         order.Status,
+			PaymentStatus:  order.PaymentStatus,
+			OrderDate:      order.OrderDate,
 		})
 	}
 
-	c.JSON(http.StatusOK, gin.H{"orders": orderResponses})
+	c.JSON(http.StatusOK, gin.H{"message": orderResponses})
 }
 
 func ChangeOrderStatus(c *gin.Context) {

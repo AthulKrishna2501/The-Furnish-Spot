@@ -52,6 +52,7 @@ func VerifyOTP(c *gin.Context) {
 		Email:       user.Email,
 		Password:    user.Password,
 		PhoneNumber: user.PhoneNumber,
+		Status:      "Available",
 	}
 
 	log.Printf("New User Data: %+v\n", newUser)

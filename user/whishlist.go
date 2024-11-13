@@ -1,7 +1,6 @@
 package user
 
 import (
-	"fmt"
 	"net/http"
 
 	db "github.com/AthulKrishna2501/The-Furniture-Spot/DB"
@@ -32,7 +31,7 @@ func ViewWhishlist(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message":  fmt.Sprintf("Wishlist retrieved successfully for UserID %d", userID),
+		"message":  "Wishlist retrieved successfully",
 		"Wishlist": whishlists,
 	})
 }
@@ -72,10 +71,10 @@ func AddToWhishlist(c *gin.Context) {
 		return
 	}
 
-	if err := db.Db.Where("product_id=?", input.ProductID).First(&whislist).Error; err == nil {
+	if err := db.Db.Where("product_id=? AND user_id=?", input.ProductID, userID).First(&whislist).Error; err == nil {
 		log.WithFields(log.Fields{
 			"ProductID": input.ProductID,
-		}).Info("Product aldready in whislist")
+		}).Error("Product aldready in whislist")
 		c.JSON(http.StatusFound, gin.H{"message": "Product aldready in whishlist"})
 		return
 	}
@@ -108,30 +107,30 @@ func WishlistRemoveItem(c *gin.Context) {
 	userID := claims.ID
 
 	var input struct {
-		Product_id int `json:"product_id"`
+		ProductID int `json:"product_id"`
 	}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
 		log.WithFields(log.Fields{
 			"UserID":    userID,
-			"ProductID": input.Product_id,
+			"ProductID": input.ProductID,
 		}).Error("Invalid input")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
 
-	if err := db.Db.Where("product_id =? AND user_id =?", input.Product_id, userID).First(&whishlist).Error; err != nil {
+	if err := db.Db.Where("product_id =? AND user_id =?", input.ProductID, userID).First(&whishlist).Error; err != nil {
 		log.WithFields(log.Fields{
 			"UserID":    userID,
-			"ProductID": input.Product_id,
+			"ProductID": input.ProductID,
 		}).Error("Item not found in wishlist")
 		c.JSON(http.StatusNotFound, gin.H{"error": "Product not found in wishlist"})
 		return
 	}
-	if err := db.Db.Where("user_id=? AND product_id =?", userID, input.Product_id).Delete(&whishlist).Error; err != nil {
+	if err := db.Db.Where("user_id=? AND product_id =?", userID, input.ProductID).Delete(&whishlist).Error; err != nil {
 		log.WithFields(log.Fields{
 			"UserID":    userID,
-			"ProductID": input.Product_id,
+			"ProductID": input.ProductID,
 		}).Error("Cannot delete product")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Cannot delete Item"})
 		return
