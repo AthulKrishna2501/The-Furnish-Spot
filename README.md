@@ -52,15 +52,15 @@ The-Furniture-Spot is a backend-focused eCommerce platform that offers a range o
 
 
 ### Project Structure
-The-Furniture-Spot/
-│
-├── controllers/        # API endpoint handlers
-├── models/             # Data models for the database
-├── routes/             # API route definitions
-├── services/           # Business logic
-├── utils/              # Helper functions (logging, currency conversion, etc.)
-├── main.go             # Application entry point
-├── README.md           # Project README file
-└── .env.example        # Environment variables example file
+- ** The-Furniture-Spot/
+- **│
+- **├── controllers/        # API endpoint handlers
+- **├── models/             # Data models for the database
+- **├── routes/             # API route definitions
+- **├── services/           # Business logic
+- **├── utils/              # Helper functions (logging, currency conversion, etc.)
+- **├── main.go             # Application entry point
+- **├── README.md           # Project README file
+- **└── .env.example        # Environment variables example file
 
 
