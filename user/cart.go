@@ -1,7 +1,6 @@
 package user
 
 import (
-	"fmt"
 	"net/http"
 	"sync"
 
@@ -44,7 +43,7 @@ func Cart(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"message": fmt.Sprintf("Cart retrieved successfully for UserID %d", userID),
+		"message": "Cart retrieved successfully",
 		"Cart":    cartItems,
 	})
 }

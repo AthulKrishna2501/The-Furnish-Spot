@@ -45,7 +45,7 @@ func UserProfile(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"User Retrieved Successfully": user})
+	c.JSON(http.StatusOK, gin.H{"User Profile Retrieved Successfully": user})
 
 }
 
@@ -378,6 +378,7 @@ func GetWalletTransactions(c *gin.Context) {
 			Amount:          transaction.Amount,
 			TransactionType: transaction.TransactionType,
 			Description:     transaction.Description,
+			CreatedAt:       transaction.CreatedAt,
 		}
 		ResTransactions = append(ResTransactions, ResTransaction)
 	}
