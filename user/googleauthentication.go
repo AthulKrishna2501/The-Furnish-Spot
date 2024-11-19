@@ -26,7 +26,7 @@ var oauthStateString = "randomstring"
 
 func HandleGoogleLogin(c *gin.Context) {
 	googleOauthConfig = &oauth2.Config{
-		RedirectURL:  "http://localhost:8080/auth/google/callback",
+		RedirectURL:  "https://thefurnishstore.shop/auth/google/callback",
 		ClientID:     os.Getenv("AUTH0_CLIENT_ID"),
 		ClientSecret: os.Getenv("AUTH0_CLIENT_SECRET"),
 		Scopes:       []string{"openid", "email", "profile"},
