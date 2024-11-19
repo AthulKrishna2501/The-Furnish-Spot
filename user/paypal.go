@@ -27,8 +27,8 @@ func CreatePayPalPayment(client *paypal.Client, amount float64) (string, string,
 	}
 
 	applicationContext := paypal.ApplicationContext{
-		ReturnURL: "http://localhost:3000/paypal/confirmpayment",
-		CancelURL: "http://localhost:3000/paypal/cancel-payment",
+		ReturnURL: "https://thefurnishstore.shop/paypal/confirmpayment",
+		CancelURL: "https://thefurnishstore.shop/paypal/cancel-payment",
 	}
 	order, err := client.CreateOrder(
 		context.Background(),
