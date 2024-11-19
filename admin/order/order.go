@@ -2,11 +2,13 @@ package order
 
 import (
 	"net/http"
+	"strconv"
 
 	db "github.com/AthulKrishna2501/The-Furniture-Spot/DB"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/models"
 	"github.com/AthulKrishna2501/The-Furniture-Spot/models/responsemodels"
 	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
 )
 
 func ListOrders(c *gin.Context) {
@@ -64,6 +66,7 @@ func ListOrders(c *gin.Context) {
 
 func ChangeOrderStatus(c *gin.Context) {
 	var order models.Order
+	var wallet models.Wallet
 
 	OrderID := c.Param("id")
 
@@ -98,6 +101,36 @@ func ChangeOrderStatus(c *gin.Context) {
 		} else if order.Status == "Delivered" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot cancel a delivered order"})
 			return
+		}
+	}
+
+	if order.Method == "Paypal" {
+
+		if err := db.Db.Where("user_id=?", order.UserID).First(&wallet).Error; err == nil {
+			wallet.Balance += order.Total
+			if err := db.Db.Save(&wallet).Error; err != nil {
+				log.WithFields(log.Fields{
+					"UserID": order.UserID,
+				}).Error("Cannot update wallet")
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Error updating wallet"})
+				return
+			}
+			walletTransaction := models.WalletTransaction{
+				UserID:          uint(order.UserID),
+				OrderID:         uint(order.OrderID),
+				Amount:          order.Total,
+				TransactionType: "Credit",
+				Description:     "Refund for Order #" + strconv.Itoa(int(order.OrderID)),
+			}
+			if err := db.Db.Create(&walletTransaction).Error; err != nil {
+				log.WithFields(log.Fields{
+					"UserID":  order.UserID,
+					"OrderID": order.OrderID,
+				}).Error("Cannot create transcation")
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Cannot create Transaction"})
+				return
+			}
+
 		}
 	}
 
