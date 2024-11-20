@@ -96,7 +96,7 @@ func GeneratePDFReport(report models.SalesReport) (string, error) {
 	pdf := gopdf.GoPdf{}
 	pdf.Start(gopdf.Config{PageSize: *gopdf.PageSizeA4})
 
-	err := pdf.AddTTFFont("LiberationSans", "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf")
+	err := pdf.AddTTFFont("DejaVuSans", "./fonts/arial.ttf")
 	if err != nil {
 		return "", err
 	}

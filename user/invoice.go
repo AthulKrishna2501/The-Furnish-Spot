@@ -17,7 +17,7 @@ func GeneratePDF(invoice models.Invoice) ([]byte, error) {
 	pdf.Start(gopdf.Config{PageSize: *gopdf.PageSizeA4})
 	pdf.AddPage()
 
-	err := pdf.AddTTFFont("DejaVuSans", "/home/athul/Documents/The Furnish spot/fonts/arial.ttf")
+	err := pdf.AddTTFFont("DejaVuSans", "./fonts/arial.ttf")
 	if err != nil {
 		return nil, fmt.Errorf("failed to add font: %w", err)
 	}
