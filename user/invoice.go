@@ -26,66 +26,80 @@ func GeneratePDF(invoice models.Invoice) ([]byte, error) {
 		return nil, fmt.Errorf("cannot set font: %w", err)
 	}
 
+	leftMargin := 20.0
+	rightMargin := 550.0
+
+	pdf.SetFont("DejaVuSans", "B", 18)
+	pdf.SetX(leftMargin)
+	pdf.Cell(nil, "The Furniture Spot")
+	pdf.Br(25)
+
+	pdf.SetFont("DejaVuSans", "", 12)
+	pdf.SetX(leftMargin)
 	pdf.Cell(nil, fmt.Sprintf("Invoice ID: %s", invoice.InvoiceID))
-	pdf.Br(17)
-
-	pdf.Cell(nil, fmt.Sprintf("Date: %s", invoice.Date.Format("02-Jan-2006")))
-	pdf.Br(17)
-
-	pdf.Cell(nil, fmt.Sprintf("Customer ID: %d", invoice.UserID))
-	pdf.Br(17)
-
-	pdf.SetFont("DejaVuSans", "", 10)
-
-	pdf.Cell(nil, "ProductID")
-	pdf.SetX(150)
-	pdf.Cell(nil, "Qty")
-	pdf.SetX(180)
-	pdf.Cell(nil, "Unit Price")
-	pdf.SetX(230)
-	pdf.Cell(nil, "Discount")
-	pdf.SetX(280)
-	pdf.Cell(nil, "Total")
 	pdf.Br(15)
+	pdf.SetX(leftMargin)
+	pdf.Cell(nil, fmt.Sprintf("Date: %s", invoice.Date.Format("02-Jan-2006")))
+	pdf.Br(15)
+	pdf.SetX(leftMargin)
+	pdf.Cell(nil, fmt.Sprintf("Customer ID: %d", invoice.UserID))
+	pdf.Br(25)
 
-	pdf.Line(5, pdf.GetY(), 400, pdf.GetY())
-	pdf.Br(10)
+	headers := []string{"Product ID", "Quantity", "Unit Price", "Discount", "Total"}
+	columnWidths := []float64{100, 100, 100, 100, 100}
+	pdf.SetFont("DejaVuSans", "B", 12)
 
-	subtotal := 0.0
+	xPos := leftMargin
+	for i, header := range headers {
+		pdf.SetX(xPos)
+		pdf.CellWithOption(&gopdf.Rect{W: columnWidths[i], H: 15}, header, gopdf.CellOption{Align: gopdf.Center})
+		xPos += columnWidths[i]
+	}
+	pdf.Br(20)
+
+	pdf.SetFont("DejaVuSans", "", 12)
 	for _, item := range invoice.Items {
-		fmt.Printf("Item: %+v\n", item)
-
 		itemTotal := (item.UnitPrice * float64(item.Quantity)) - item.Discount
-		subtotal += itemTotal
 
-		pdf.Cell(nil, fmt.Sprintf("%d", item.ProductID))
-		pdf.SetX(150)
-		pdf.Cell(nil, fmt.Sprintf("%d", item.Quantity))
+		xPos := leftMargin
+		row := []string{
+			fmt.Sprintf("%d", item.ProductID),
+			fmt.Sprintf("%d", item.Quantity),
+			fmt.Sprintf("%.2f", item.UnitPrice),
+			fmt.Sprintf("%.2f", item.Discount),
+			fmt.Sprintf("%.2f", itemTotal),
+		}
 
-		pdf.SetX(180)
-		pdf.Cell(nil, fmt.Sprintf("%.2f", item.UnitPrice))
-
-		pdf.SetX(230)
-		pdf.Cell(nil, fmt.Sprintf("%.2f", item.Discount))
-
-		pdf.SetX(280)
-		pdf.Cell(nil, fmt.Sprintf("%.2f", itemTotal))
-
-		pdf.Br(10)
+		for i, cell := range row {
+			pdf.SetX(xPos)
+			pdf.CellWithOption(&gopdf.Rect{W: columnWidths[i], H: 15}, cell, gopdf.CellOption{Align: gopdf.Center})
+			xPos += columnWidths[i]
+		}
+		pdf.Br(15)
 	}
 
-	discountApplied := invoice.Subtotal - subtotal
-	total := subtotal - discountApplied
+	tableEndY := pdf.GetY()
+	pdf.Line(leftMargin, tableEndY, rightMargin, tableEndY)
+	pdf.Br(25)
 
-	pdf.Br(15)
 	pdf.SetFont("DejaVuSans", "", 12)
-	pdf.Cell(nil, fmt.Sprintf("Subtotal: %.2f", subtotal))
+	pdf.SetX(leftMargin)
+	pdf.Cell(nil, fmt.Sprintf("Subtotal: %.2f", invoice.Subtotal))
 	pdf.Br(15)
-	pdf.Cell(nil, fmt.Sprintf("Discount Applied: %.2f", discountApplied))
+	pdf.SetX(leftMargin)
+	pdf.Cell(nil, fmt.Sprintf("Discount Applied: %.2f", invoice.Discount))
 	pdf.Br(15)
+	pdf.SetFont("DejaVuSans", "B", 14)
+	pdf.SetX(leftMargin)
+	pdf.Cell(nil, fmt.Sprintf("Total: %.2f", invoice.Total))
+	pdf.Br(25)
 
-	pdf.Cell(nil, fmt.Sprintf("Total: %.2f", total))
+	pdf.SetFont("DejaVuSans", "", 10)
+	pdf.SetX(leftMargin)
+	pdf.Cell(nil, "Thank you for shopping with The Furniture Spot!")
 	pdf.Br(15)
+	pdf.SetX(leftMargin)
+	pdf.Cell(nil, "For support, contact us at support@thefurniturespot.com.")
 
 	var buffer bytes.Buffer
 	_, err = pdf.WriteTo(&buffer)
@@ -95,6 +109,7 @@ func GeneratePDF(invoice models.Invoice) ([]byte, error) {
 
 	return buffer.Bytes(), nil
 }
+
 func GenerateInvoiceHandler(c *gin.Context) {
 	var invoice models.Invoice
 	var order models.Order
@@ -121,7 +136,7 @@ func GenerateInvoiceHandler(c *gin.Context) {
 			Discount:   float64(item.Discount),
 			Quantity:   item.Quantity,
 			UnitPrice:  item.Price,
-			TotalPrice: totalPrice, 
+			TotalPrice: totalPrice,
 		})
 
 		subtotal += totalPrice
@@ -130,7 +145,7 @@ func GenerateInvoiceHandler(c *gin.Context) {
 	invoice.InvoiceID = fmt.Sprintf("INV-%d", order.OrderID)
 	invoice.Date = time.Now()
 	invoice.UserID = order.UserID
-	invoice.Subtotal = subtotal 
+	invoice.Subtotal = subtotal
 	invoice.Discount = order.Discount
 	invoice.Total = subtotal - order.Discount
 	invoice.Items = invoiceItems
